@@ -16,6 +16,11 @@ model User {
   baseCurrency   String             @default("USD")
   monthlyBudget  Float?
   currentBalance Float              @default(0.0)
+  monthlyIncome  Float              @default(0.0)
+  allowance      Float              @default(0.0)
+  salary         Float              @default(0.0)
+  freelanceIncome Float             @default(0.0)
+  otherIncome    Float              @default(0.0)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
   conversations  AIConversation[]

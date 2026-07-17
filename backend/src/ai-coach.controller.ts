@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Query, BadRequestException } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 @Controller('api/ai-coach')
@@ -87,7 +87,27 @@ export class AiCoachController {
     }
   }
 
-  // 2. CHAT / AFFORDABILITY CHECK
+  // 2. GET CHAT HISTORY
+  @Get('history')
+  async getChatHistory(@Query('userId') userId: string) {
+    if (!userId) throw new BadRequestException('User ID is required');
+    return this.prisma.aIConversation.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
+
+  // 3. DELETE CHAT HISTORY
+  @Delete('history')
+  async deleteChatHistory(@Query('userId') userId: string) {
+    if (!userId) throw new BadRequestException('User ID is required');
+    await this.prisma.aIConversation.deleteMany({
+      where: { userId }
+    });
+    return { success: true, message: 'Chat history cleared' };
+  }
+
+  // 4. CHAT / AFFORDABILITY CHECK
   @Post('chat')
   async chatQuery(@Body() body: any) {
     const { userId, message } = body;
@@ -120,17 +140,58 @@ export class AiCoachController {
 
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      // Mock Fallback
+      const fallbackAns = isAffordable
+        ? `Yes, this fits within your daily safe allowance of $${dailySafeSpending.toFixed(2)}. Go ahead and log it afterwards!`
+        : `That purchase of $${cost.toFixed(2)} exceeds your daily safe limit of $${dailySafeSpending.toFixed(2)}. I recommend waiting or splitting it.`;
+
+      // Save fallback in DB
+      await this.prisma.aIConversation.create({
+        data: {
+          userId,
+          prompt: message,
+          response: fallbackAns
+        }
+      });
+
       return {
-        answer: isAffordable
-          ? `Yes, this fits within your daily safe allowance of $${dailySafeSpending.toFixed(2)}. Go ahead and log it afterwards!`
-          : `That purchase of $${cost.toFixed(2)} exceeds your daily safe limit of $${dailySafeSpending.toFixed(2)}. I recommend waiting or splitting it.`,
+        answer: fallbackAns,
         isAffordable,
         dssImpact: dailySafeSpending - cost
       };
     }
 
     try {
+      // Get conversation history
+      const history = await this.prisma.aIConversation.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 8
+      });
+      const reversedHistory = history.reverse();
+
+      const messages: any[] = [
+        {
+          role: 'system',
+          content: 'You are Finova, the financial coach. Evaluate if the student can afford the cost, or answer their financial question. CRITICAL: By default, you MUST provide simple, concise, short, practical, conversational, and easy-to-understand answers (max 1-2 sentences). DO NOT use long or overly technical explanations for everyday financial questions. ONLY generate detailed or complex responses if the user EXPLICITLY asks for them. Format response strictly as a JSON object: { "answer": "string", "isAffordable": boolean, "dssImpact": float }'
+        }
+      ];
+
+      for (const conv of reversedHistory) {
+        messages.push({ role: 'user', content: conv.prompt });
+        // Ensure response is inside valid assistant content
+        let cleanResponse = conv.response;
+        try {
+          const parsed = JSON.parse(conv.response);
+          if (parsed && parsed.answer) cleanResponse = parsed.answer;
+        } catch {}
+        messages.push({ role: 'assistant', content: cleanResponse });
+      }
+
+      messages.push({
+        role: 'user',
+        content: `User query: "${message}", remaining budget: $${remainingBudgetUSD}, daily allowance: $${dailySafeSpending}, proposed item cost: $${cost}`
+      });
+
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -140,16 +201,7 @@ export class AiCoachController {
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
           response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: 'You are Finova, the financial coach. Evaluate if the student can afford the cost, or answer their financial question. CRITICAL: By default, you MUST provide simple, concise, short, practical, conversational, and easy-to-understand answers (max 1-2 sentences). DO NOT use long or overly technical explanations for everyday financial questions. ONLY generate detailed or complex responses if the user EXPLICITLY asks for them. Format response strictly as a JSON object: { "answer": "string", "isAffordable": boolean, "dssImpact": float }'
-            },
-            {
-              role: 'user',
-              content: `User query: "${message}", remaining budget: $${remainingBudgetUSD}, daily allowance: $${dailySafeSpending}, proposed item cost: $${cost}`
-            }
-          ]
+          messages
         })
       });
 
@@ -159,11 +211,34 @@ export class AiCoachController {
       }
 
       const data = await response.json();
-      return JSON.parse(data.choices[0].message.content);
+      const contentText = data.choices[0].message.content;
+      const parsedAns = JSON.parse(contentText);
+
+      // Save conversation in DB
+      await this.prisma.aIConversation.create({
+        data: {
+          userId,
+          prompt: message,
+          response: parsedAns.answer || parsedAns.message || 'Processed response'
+        }
+      });
+
+      return parsedAns;
     } catch (err) {
       console.error('Chat Query AI Error:', err);
+      const fallbackAns = `Evaluating offline: Your current daily safe spend limit is $${dailySafeSpending.toFixed(2)}.`;
+      
+      // Save offline fallback in DB
+      await this.prisma.aIConversation.create({
+        data: {
+          userId,
+          prompt: message,
+          response: fallbackAns
+        }
+      });
+
       return {
-        answer: `Evaluating offline: Your current daily safe spend limit is $${dailySafeSpending.toFixed(2)}.`,
+        answer: fallbackAns,
         isAffordable,
         dssImpact: dailySafeSpending - cost
       };

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 @Controller('api/gamification')
@@ -77,12 +77,14 @@ export class GamificationController {
       }
     });
 
+    // Check achievements
+    await this.prisma.checkAndAwardTrophies(body.userId);
+
     return { success: true, newCurrentStreak, newXp, activity };
   }
 
   @Get('streaks')
-  async getStreaks(@Req() req) {
-    const userId = req.query.userId;
+  async getStreaks(@Query('userId') userId: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { userId }
     });
@@ -101,20 +103,28 @@ export class GamificationController {
   }
 
   @Get('trophies')
-  async getTrophies(@Req() req) {
-    const userId = req.query.userId;
+  async getTrophies(@Query('userId') userId: string) {
+    await this.prisma.checkAndAwardTrophies(userId);
+    
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId }
+    });
     const badges = await this.prisma.userBadge.findMany({
       where: { userId }
     });
-    return badges;
+
+    return {
+      profile: {
+        xp: profile?.xp || 0,
+        currentStreak: profile?.currentStreak || 0,
+        highestStreak: profile?.highestStreak || 0
+      },
+      badges
+    };
   }
 
   @Post('trophies/check')
   async checkTrophies(@Body() body: { userId: string, badgeId: string }) {
-    // Basic endpoint to manually award a trophy or check conditions.
-    // Real implementation would verify conditions (e.g. check total transactions count).
-    
-    // For now, allow frontend to trigger unlock for specific badge IDs if conditions met
     try {
       const badge = await this.prisma.userBadge.create({
         data: {
@@ -124,7 +134,6 @@ export class GamificationController {
       });
       return { success: true, badge };
     } catch (err) {
-      // If it fails (unique constraint), they already have it
       return { success: false, message: 'Badge already unlocked' };
     }
   }

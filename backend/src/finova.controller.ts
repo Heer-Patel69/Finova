@@ -87,7 +87,7 @@ export class FinovaController {
 
   @Patch('auth/onboard')
   async onboard(@Body() body: any) {
-    const { userId, monthlyBudget, wallets } = body;
+    const { userId, monthlyBudget, wallets, monthlyIncome, allowance, salary, freelanceIncome, otherIncome } = body;
     if (!userId) throw new BadRequestException('User ID is required');
 
     let totalInitialBalance = 0;
@@ -111,6 +111,11 @@ export class FinovaController {
       data: {
         monthlyBudget,
         currentBalance: totalInitialBalance,
+        monthlyIncome: monthlyIncome || 0.0,
+        allowance: allowance || 0.0,
+        salary: salary || 0.0,
+        freelanceIncome: freelanceIncome || 0.0,
+        otherIncome: otherIncome || 0.0,
         wallets: {
           create: walletsToCreate
         }
@@ -190,6 +195,8 @@ export class FinovaController {
       where: { userId: wallet.userId },
       data: { xp: { increment: 15 } }
     });
+
+    await this.prisma.checkAndAwardTrophies(wallet.userId);
 
     return transaction;
   }

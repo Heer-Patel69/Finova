@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Send, Sparkles, Shield, TrendingUp, Wallet, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Sparkles, Shield, TrendingUp, Wallet, Zap, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { API_URL } from '../config';
 
@@ -19,6 +19,64 @@ export default function CoachPage() {
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
     { sender: 'ai', text: "Hey! I'm your Finova AI Coach 🧠 Ask me anything about your finances — from \"Can I buy this?\" to \"How do I save for a laptop?\"" },
   ]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Load chat history for the currently logged-in user
+  useEffect(() => {
+    if (!user || !token) return;
+    
+    setLoadingHistory(true);
+    fetch(`${API_URL}/api/ai-coach/history?userId=${user.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load chat history');
+        return res.json();
+      })
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const msgs: { sender: 'user' | 'ai'; text: string }[] = [];
+          data.forEach((item) => {
+            msgs.push({ sender: 'user', text: item.prompt });
+            msgs.push({ sender: 'ai', text: item.response });
+          });
+          setChatMessages([
+            { sender: 'ai', text: "Hey! I'm your Finova AI Coach 🧠 Ask me anything about your finances — from \"Can I buy this?\" to \"How do I save for a laptop?\"" },
+            ...msgs
+          ]);
+        } else {
+          // Reset to default greeting if no messages
+          setChatMessages([
+            { sender: 'ai', text: "Hey! I'm your Finova AI Coach 🧠 Ask me anything about your finances — from \"Can I buy this?\" to \"How do I save for a laptop?\"" },
+          ]);
+        }
+      })
+      .catch((err) => {
+        console.error('Error loading history:', err);
+      })
+      .finally(() => {
+        setLoadingHistory(false);
+      });
+  }, [user, token]);
+
+  const handleClearChat = async () => {
+    if (!user || !token) return;
+    if (!window.confirm('Are you sure you want to clear your conversation history?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/ai-coach/history?userId=${user.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setChatMessages([
+          { sender: 'ai', text: "Hey! I'm your Finova AI Coach 🧠 Ask me anything about your finances — from \"Can I buy this?\" to \"How do I save for a laptop?\"" },
+        ]);
+      }
+    } catch (err) {
+      console.error('Failed to clear chat history:', err);
+    }
+  };
 
   const now = new Date();
   const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -89,9 +147,20 @@ export default function CoachPage() {
     <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] lg:h-[calc(100vh-100px)] w-full animate-fade-in-up">
       {/* Left Column: Dashboard Cards */}
       <div className="flex-shrink-0 lg:w-1/3 space-y-6 mb-4 lg:mb-0">
-        <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
-          AI Coach
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
+            AI Coach
+          </h1>
+          {chatMessages.length > 1 && (
+            <button
+              onClick={handleClearChat}
+              className="text-xs text-red-400 hover:text-red-300 font-semibold flex items-center gap-1.5 p-1 px-2 rounded-lg hover:bg-red-500/10 transition-colors"
+            >
+              <Trash2 size={13} />
+              Clear Chat
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-3 gap-2.5">
           <div className="card p-3 text-center">
