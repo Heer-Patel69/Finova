@@ -10,6 +10,47 @@ function cleanJsonResponse(text: string): string {
   return clean.trim();
 }
 
+async function fetchFromGroq(apiKey: string, messages: any[]): Promise<any> {
+  const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      console.log(`[Groq] Attempting request using model: ${model}`);
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          response_format: { type: 'json_object' },
+          messages
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Groq API Error: ${response.status} ${errText}`);
+      }
+
+      const data = await response.json();
+      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
+      }
+      return data;
+    } catch (err) {
+      console.warn(`[Groq] Failed with model ${model}:`, err.message || err);
+      lastError = err;
+      if (err.message && (err.message.includes('429') || err.message.includes('rate_limit'))) {
+        continue;
+      }
+      // If it's another error, also retry with fallback model
+    }
+  }
+  throw lastError || new Error('Failed to query Groq');
+}
+
 @Controller('api/ai-coach')
 export class AiCoachController {
   constructor(private readonly prisma: PrismaService) {}
@@ -54,37 +95,17 @@ export class AiCoachController {
 
     // Call Groq API
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
+      const messages = [
+        {
+          role: 'system',
+          content: 'You are Finova, an empathetic AI coach for students. Format response strictly as a JSON object: { "greeting": "string", "statusSummary": "string", "dailySafeSpending": float, "dailyQuest": "string", "coachTip": "string" }'
         },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: 'You are Finova, an empathetic AI coach for students. Format response strictly as a JSON object: { "greeting": "string", "statusSummary": "string", "dailySafeSpending": float, "dailyQuest": "string", "coachTip": "string" }'
-            },
-            {
-              role: 'user',
-              content: `User name: ${user.name}, remaining days: ${daysRemaining}, remaining budget: $${remainingBudgetUSD}, DSS limit: $${dailySafeSpending}`
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Groq API Error: ${response.status} ${errText}`);
-      }
-
-      const data = await response.json();
-      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
-      }
+        {
+          role: 'user',
+          content: `User name: ${user.name}, remaining days: ${daysRemaining}, remaining budget: $${remainingBudgetUSD}, DSS limit: $${dailySafeSpending}`
+        }
+      ];
+      const data = await fetchFromGroq(apiKey, messages);
       const contentText = data.choices[0].message.content;
       return JSON.parse(cleanJsonResponse(contentText));
     } catch (err) {
@@ -205,28 +226,7 @@ export class AiCoachController {
         content: `User query: "${message}", remaining budget: $${remainingBudgetUSD}, daily allowance: $${dailySafeSpending}, proposed item cost: $${cost}`
       });
 
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          response_format: { type: 'json_object' },
-          messages
-        })
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Groq API Error: ${response.status} ${errText}`);
-      }
-
-      const data = await response.json();
-      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
-      }
+      const data = await fetchFromGroq(apiKey, messages);
       const contentText = data.choices[0].message.content;
       const parsedAns = JSON.parse(cleanJsonResponse(contentText));
 
