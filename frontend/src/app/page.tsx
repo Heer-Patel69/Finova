@@ -114,24 +114,39 @@ export default function AppHome() {
     setChatMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
     setChatInput('');
 
-    // Simulate AI Coaching response based on context
-    setTimeout(() => {
-      let reply = '';
-      if (userMsg.toLowerCase().includes('buy') || userMsg.toLowerCase().includes('afford')) {
-        const costStr = userMsg.match(/\d+/);
-        const cost = costStr ? parseInt(costStr[0]) : 30;
-        if (cost > dailySafeSpendUSD * 1.5) {
-          reply = `Oops! That spending of ${formatCurrency(cost)} exceeds your Daily Safe Spending of ${formatCurrency(dailySafeSpendUSD)}. Doing this might delay your "New Laptop" goal. I suggest cooking at home or splitting it!`;
+    try {
+      const response = await fetch('http://localhost:5000/api/ai-coach/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: 'user-uuid-1', // maps to mock user in Prisma DB
+          message: userMsg
+        })
+      });
+      const data = await response.json();
+      setChatMessages(prev => [...prev, { sender: 'ai', text: data.answer || data.message || 'Error processing coach insight.' }]);
+    } catch (err) {
+      // Simulate AI Coaching response based on context if server is offline
+      setTimeout(() => {
+        let reply = '';
+        if (userMsg.toLowerCase().includes('buy') || userMsg.toLowerCase().includes('afford')) {
+          const costStr = userMsg.match(/\d+/);
+          const cost = costStr ? parseInt(costStr[0]) : 30;
+          if (cost > dailySafeSpendUSD * 1.5) {
+            reply = `Oops! That spending of ${formatCurrency(cost)} exceeds your Daily Safe Spending of ${formatCurrency(dailySafeSpendUSD)}. Doing this might delay your "New Laptop" goal. I suggest cooking at home or splitting it!`;
+          } else {
+            reply = `Yes, you can afford it! It fits within your today's budget allowance of ${formatCurrency(dailySafeSpendUSD)}. Make sure to log it right after.`;
+          }
+        } else if (userMsg.toLowerCase().includes('save')) {
+          reply = `To hit your "New Laptop" goal by December, you need to save about $110/month. Try capping your coffee expenses at $15/week. That is an easy $30 saved!`;
         } else {
-          reply = `Yes, you can afford it! It fits within your today's budget allowance of ${formatCurrency(dailySafeSpendUSD)}. Make sure to log it right after.`;
+          reply = `I analyzed your spending. You are doing great staying under budget for ${streak} days in a row! Keep this up to earn the 'Budget Master' badge.`;
         }
-      } else if (userMsg.toLowerCase().includes('save')) {
-        reply = `To hit your "New Laptop" goal by December, you need to save about $110/month. Try capping your coffee expenses at $15/week. That is an easy $30 saved!`;
-      } else {
-        reply = `I analyzed your spending. You are doing great staying under budget for ${streak} days in a row! Keep this up to earn the 'Budget Master' badge.`;
-      }
-      setChatMessages(prev => [...prev, { sender: 'ai', text: reply }]);
-    }, 800);
+        setChatMessages(prev => [...prev, { sender: 'ai', text: reply }]);
+      }, 800);
+    }
   };
 
   const handleAddSplitExpense = (e: React.FormEvent) => {
