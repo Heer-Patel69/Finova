@@ -1,0 +1,30 @@
+# Node / Dependencies
+node_modules/
+**/node_modules/
+
+# Production/Build outputs
+dist/
+**/dist/
+.next/
+**/ .next/
+build/
+**/build/
+
+# Local Environment Variables
+.env
+.env*.local
+**/.env
+**/.env*.local
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db

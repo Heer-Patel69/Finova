@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-finova-yellow: #FFE81A;
+  --color-finova-black: #000000;
+  --color-finova-bg: #FBFBF9;
+  --color-finova-success: #2DDC73;
+  --color-finova-warning: #FF8B20;
+  --color-finova-error: #FF3E3E;
+  
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --shadow-brutal: 4px 4px 0px 0px #000000;
+  --shadow-brutal-active: 1px 1px 0px 0px #000000;
+  
+  --border-width-brutal: 2px;
+  --border-width-brutal-thick: 3px;
+}
+
+body {
+  background-color: var(--color-finova-bg);
+  color: var(--color-finova-black);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Custom Neo-Brutalist Classes */
+.brutal-card {
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.15s ease-in-out;
+}
+
+.brutal-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px 0px #000000;
+}
+
+.brutal-btn-primary {
+  background-color: #FFE81A;
+  color: #000000;
+  font-weight: 700;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0px 0px #000000;
+  transition: all 0.1s ease-in-out;
+  cursor: pointer;
+}
+
+.brutal-btn-primary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.brutal-input {
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #000000;
+  outline: none;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.brutal-input:focus {
+  background-color: rgba(255, 232, 26, 0.1);
+}
