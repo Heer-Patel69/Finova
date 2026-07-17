@@ -25,7 +25,7 @@ export class AiCoachController {
       }
     });
 
-    const totalSpentUSD = expenses.reduce((sum, e) => sum + e.convertedAmount, 0);
+    const totalSpentUSD = expenses.reduce((sum, e) => sum + (e.convertedAmount || e.amount || 0), 0);
     const budgetLimitUSD = user.monthlyBudget || 500;
     const remainingBudgetUSD = Math.max(0, budgetLimitUSD - totalSpentUSD);
     const daysRemaining = 30 - new Date().getDate() + 1;
@@ -127,7 +127,7 @@ export class AiCoachController {
       }
     });
 
-    const totalSpentUSD = expenses.reduce((sum, e) => sum + e.convertedAmount, 0);
+    const totalSpentUSD = expenses.reduce((sum, e) => sum + (e.convertedAmount || e.amount || 0), 0);
     const budgetLimitUSD = user.monthlyBudget || 500;
     const remainingBudgetUSD = Math.max(0, budgetLimitUSD - totalSpentUSD);
     const daysRemaining = 30 - new Date().getDate() + 1;

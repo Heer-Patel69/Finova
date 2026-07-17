@@ -279,7 +279,7 @@ export class FinovaController {
       }
     });
 
-    const totalSpentUSD = expenses.reduce((sum, e) => sum + e.convertedAmount, 0);
+    const totalSpentUSD = expenses.reduce((sum, e) => sum + (e.convertedAmount || e.amount || 0), 0);
     const budgetLimitUSD = user.monthlyBudget || 500;
     const remainingBudgetUSD = Math.max(0, budgetLimitUSD - totalSpentUSD);
     const daysRemaining = 30 - new Date().getDate() + 1;
@@ -449,8 +449,8 @@ export class FinovaController {
       }
     });
 
-    const totalSpending = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0);
-    const totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0);
+    const totalSpending = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + (t.convertedAmount || t.amount || 0), 0);
+    const totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + (t.convertedAmount || t.amount || 0), 0);
     const netBalance = totalIncome - totalSpending;
 
     return {
@@ -511,8 +511,8 @@ export class FinovaController {
     }
 
     // PDF / HTML Print Layout
-    const totalSpent = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0),
-      totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0);
+    const totalSpent = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + (t.convertedAmount || t.amount || 0), 0),
+      totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + (t.convertedAmount || t.amount || 0), 0);
 
     const htmlReport = `
       <!DOCTYPE html>

@@ -82,7 +82,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           date: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) }
         }
       });
-      const totalSpent = expenses.reduce((sum, e) => sum + e.convertedAmount, 0);
+      const totalSpent = expenses.reduce((sum, e) => sum + (e.convertedAmount || e.amount || 0), 0);
       const userObj = await this.user.findUnique({ where: { id: userId } });
       if (userObj && userObj.monthlyBudget && totalSpent > 0 && totalSpent <= userObj.monthlyBudget) {
         await unlockBadge('budget-master', 200);
