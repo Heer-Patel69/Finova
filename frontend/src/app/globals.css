@@ -1,75 +1,577 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
+/* ================================================================
+   FINOVA V2 — SOFT NEOMORPHIC DESIGN SYSTEM
+   Premium fintech aesthetic with dark/light theme support
+   ================================================================ */
+
 @theme {
-  --color-finova-yellow: #FFE81A;
-  --color-finova-black: #000000;
-  --color-finova-bg: #FBFBF9;
-  --color-finova-success: #2DDC73;
-  --color-finova-warning: #FF8B20;
-  --color-finova-error: #FF3E3E;
-  
+  /* Brand Colors */
+  --color-finova-primary: #6C5CE7;
+  --color-finova-primary-light: #A29BFE;
+  --color-finova-accent: #00D2FF;
+  --color-finova-success: #00B894;
+  --color-finova-warning: #FDCB6E;
+  --color-finova-error: #FF6B6B;
+  --color-finova-orange: #F39C12;
+
+  /* Fonts */
   --font-heading: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
-  
-  --shadow-brutal: 4px 4px 0px 0px #000000;
-  --shadow-brutal-active: 1px 1px 0px 0px #000000;
-  
-  --border-width-brutal: 2px;
-  --border-width-brutal-thick: 3px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+}
+
+/* ================================================================
+   LIGHT THEME (Default)
+   ================================================================ */
+:root {
+  --bg-primary: #F8F9FC;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F0F2F8;
+  --bg-elevated: #FFFFFF;
+  --bg-input: #F4F5FA;
+
+  --text-primary: #1A1D2E;
+  --text-secondary: #6B7194;
+  --text-tertiary: #9CA3C4;
+  --text-inverse: #FFFFFF;
+
+  --border-primary: rgba(107, 113, 148, 0.12);
+  --border-secondary: rgba(107, 113, 148, 0.06);
+
+  --shadow-card: 0 2px 12px rgba(26, 29, 46, 0.06), 0 1px 4px rgba(26, 29, 46, 0.04);
+  --shadow-card-hover: 0 8px 24px rgba(26, 29, 46, 0.1), 0 2px 8px rgba(26, 29, 46, 0.06);
+  --shadow-elevated: 0 12px 40px rgba(26, 29, 46, 0.12);
+  --shadow-button: 0 2px 8px rgba(108, 92, 231, 0.3);
+  --shadow-inner: inset 0 2px 4px rgba(26, 29, 46, 0.04);
+
+  --chart-grid: rgba(107, 113, 148, 0.08);
+  --chart-text: #6B7194;
+
+  --gradient-primary: linear-gradient(135deg, #6C5CE7, #A29BFE);
+  --gradient-accent: linear-gradient(135deg, #00D2FF, #3A7BD5);
+  --gradient-success: linear-gradient(135deg, #00B894, #55EFC4);
+  --gradient-warm: linear-gradient(135deg, #F39C12, #FDCB6E);
+  --gradient-card: linear-gradient(145deg, #FFFFFF, #F4F5FA);
+
+  --nav-bg: rgba(255, 255, 255, 0.92);
+  --nav-border: rgba(107, 113, 148, 0.08);
+
+  --skeleton-base: #EEF0F6;
+  --skeleton-shine: #F8F9FC;
+
+  --overlay: rgba(26, 29, 46, 0.4);
+}
+
+/* ================================================================
+   DARK THEME
+   ================================================================ */
+[data-theme="dark"] {
+  --bg-primary: #0F1123;
+  --bg-secondary: #181B2E;
+  --bg-tertiary: #1E2140;
+  --bg-elevated: #222545;
+  --bg-input: #1E2140;
+
+  --text-primary: #E8EAF6;
+  --text-secondary: #9CA3C4;
+  --text-tertiary: #6B7194;
+  --text-inverse: #0F1123;
+
+  --border-primary: rgba(162, 155, 254, 0.12);
+  --border-secondary: rgba(162, 155, 254, 0.06);
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.2), 0 1px 4px rgba(0, 0, 0, 0.15);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --shadow-button: 0 2px 8px rgba(108, 92, 231, 0.4);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.15);
+
+  --chart-grid: rgba(162, 155, 254, 0.08);
+  --chart-text: #9CA3C4;
+
+  --gradient-primary: linear-gradient(135deg, #6C5CE7, #A29BFE);
+  --gradient-accent: linear-gradient(135deg, #00D2FF, #3A7BD5);
+  --gradient-success: linear-gradient(135deg, #00B894, #55EFC4);
+  --gradient-warm: linear-gradient(135deg, #F39C12, #FDCB6E);
+  --gradient-card: linear-gradient(145deg, #1E2140, #181B2E);
+
+  --nav-bg: rgba(15, 17, 35, 0.95);
+  --nav-border: rgba(162, 155, 254, 0.08);
+
+  --skeleton-base: #1E2140;
+  --skeleton-shine: #2A2D50;
+
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* ================================================================
+   BASE STYLES
+   ================================================================ */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--color-finova-bg);
-  color: var(--color-finova-black);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: var(--font-body);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  color: var(--text-primary);
 }
 
-/* Custom Neo-Brutalist Classes */
-.brutal-card {
-  background-color: #ffffff;
-  border: 2px solid #000000;
-  border-radius: 12px;
-  box-shadow: 4px 4px 0px 0px #000000;
-  transition: all 0.15s ease-in-out;
+/* ================================================================
+   CARD SYSTEM
+   ================================================================ */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.brutal-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px 0px #000000;
+.card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
 }
 
-.brutal-btn-primary {
-  background-color: #FFE81A;
-  color: #000000;
-  font-weight: 700;
-  border: 2px solid #000000;
-  border-radius: 12px;
-  box-shadow: 4px 4px 0px 0px #000000;
-  transition: all 0.1s ease-in-out;
+.card-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-elevated);
+}
+
+.card-gradient {
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-button);
+  color: white;
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+}
+
+/* ================================================================
+   BUTTON SYSTEM
+   ================================================================ */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  border: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-button);
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.brutal-btn-primary:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0px 0px #000000;
+.btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.45);
+  transform: translateY(-1px);
 }
 
-.brutal-input {
-  background-color: #ffffff;
-  border: 2px solid #000000;
-  border-radius: 12px;
+.btn-primary:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 4px rgba(108, 92, 231, 0.3);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: 600;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-elevated);
+  border-color: var(--color-finova-primary);
+}
+
+.btn-secondary:active {
+  transform: scale(0.96);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+}
+
+/* ================================================================
+   INPUT SYSTEM
+   ================================================================ */
+.input {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-primary);
+  border-radius: var(--radius-md);
   padding: 12px 16px;
-  color: #000000;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
   outline: none;
-  transition: background-color 0.15s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
 }
 
-.brutal-input:focus {
-  background-color: rgba(255, 232, 26, 0.1);
+.input:focus {
+  border-color: var(--color-finova-primary);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+  background: var(--bg-secondary);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7194' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* ================================================================
+   PILL / CHIP SYSTEM
+   ================================================================ */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1.5px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.pill:hover {
+  border-color: var(--color-finova-primary);
+  color: var(--color-finova-primary);
+}
+
+.pill-active {
+  background: var(--gradient-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: var(--shadow-button);
+}
+
+.pill-active:hover {
+  color: white;
+}
+
+/* ================================================================
+   SKELETON LOADING
+   ================================================================ */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-shine) 50%, var(--skeleton-base) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-text {
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-heading {
+  height: 24px;
+  border-radius: 8px;
+}
+
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-circle {
+  border-radius: 50%;
+}
+
+/* ================================================================
+   MICRO ANIMATIONS
+   ================================================================ */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108, 92, 231, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(108, 92, 231, 0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease infinite;
+}
+
+/* Stagger delays for lists */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+.stagger-6 { animation-delay: 0.3s; opacity: 0; }
+
+/* ================================================================
+   PROGRESS BAR
+   ================================================================ */
+.progress-bar {
+  height: 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-bar-success .progress-bar-fill {
+  background: var(--gradient-success);
+}
+
+.progress-bar-warning .progress-bar-fill {
+  background: var(--gradient-warm);
+}
+
+/* ================================================================
+   NAV BAR
+   ================================================================ */
+.bottom-nav {
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--nav-border);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  padding: 4px 0;
+  position: relative;
+}
+
+.nav-item:active {
+  transform: scale(0.88);
+}
+
+.nav-item-active {
+  color: var(--color-finova-primary);
+}
+
+.nav-item-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-finova-primary);
+}
+
+.fab-button {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(108, 92, 231, 0.4);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+  color: white;
+  transform: translateY(-16px);
+}
+
+.fab-button:hover {
+  box-shadow: 0 6px 24px rgba(108, 92, 231, 0.5);
+  transform: translateY(-18px);
+}
+
+.fab-button:active {
+  transform: translateY(-14px) scale(0.92);
+}
+
+/* ================================================================
+   CHAT BUBBLES
+   ================================================================ */
+.chat-bubble-user {
+  background: var(--gradient-primary);
+  color: white;
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-button);
+}
+
+.chat-bubble-ai {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-radius: 18px 18px 18px 4px;
+  padding: 12px 16px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid var(--border-primary);
+}
+
+/* ================================================================
+   SCROLLBAR
+   ================================================================ */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ================================================================
+   UTILITY
+   ================================================================ */
+.text-gradient {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Safe area for notched devices */
+.safe-bottom {
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
 }

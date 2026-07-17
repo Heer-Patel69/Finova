@@ -331,4 +331,101 @@ export class FinovaController {
 
     return { netBalances, settlements };
   }
+
+  // 6. ANALYTICS ENDPOINTS
+
+  @Get('analytics/summary')
+  async getAnalyticsSummary(@Query('userId') userId: string, @Query('dateRange') dateRange: string) {
+    if (!userId) throw new BadRequestException('User ID required');
+    const wallets = await this.prisma.wallet.findMany({ where: { userId } });
+    const walletIds = wallets.map(w => w.id);
+
+    const now = new Date();
+    let startDate = new Date(now.getFullYear(), now.getMonth(), 1); // default this month
+    if (dateRange === 'today') {
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (dateRange === '7d') {
+      startDate = new Date(now.getTime() - 7 * 86400000);
+    } else if (dateRange === '30d') {
+      startDate = new Date(now.getTime() - 30 * 86400000);
+    } else if (dateRange === 'year') {
+      startDate = new Date(now.getFullYear(), 0, 1);
+    }
+
+    const txs = await this.prisma.transaction.findMany({
+      where: {
+        walletId: { in: walletIds },
+        date: { gte: startDate }
+      }
+    });
+
+    const totalSpending = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0);
+    const totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0);
+    const netBalance = totalIncome - totalSpending;
+
+    return {
+      totalSpending,
+      totalIncome,
+      netBalance,
+      transactionCount: txs.length
+    };
+  }
+
+  @Get('leaderboard')
+  async getLeaderboard(
+    @Query('scope') scope: string,
+    @Query('college') college: string,
+    @Query('userId') userId: string
+  ) {
+    const users = await this.prisma.user.findMany({
+      include: { profile: true },
+      orderBy: { profile: { xp: 'desc' } },
+      take: 20
+    });
+
+    return users.map((u, i) => ({
+      rank: i + 1,
+      name: u.name,
+      college: u.college || 'Universal',
+      xp: u.profile?.xp || 0,
+      streak: u.profile?.currentStreak || 0,
+      badge: (u.profile?.xp || 0) > 300 ? 'Budget Guru' : 'Saver Starter'
+    }));
+  }
+
+  @Get('reports/export')
+  async exportReport(
+    @Query('userId') userId: string,
+    @Query('format') format: string
+  ) {
+    if (!userId) throw new BadRequestException('User ID required');
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+
+    const wallets = await this.prisma.wallet.findMany({ where: { userId } });
+    const walletIds = wallets.map(w => w.id);
+    const txs = await this.prisma.transaction.findMany({
+      where: { walletId: { in: walletIds } },
+      orderBy: { date: 'desc' }
+    });
+
+    if (format === 'csv') {
+      let csv = 'ID,Date,Category,Type,Amount,Currency,ConvertedAmountUSD,Merchant,Notes\n';
+      for (const t of txs) {
+        csv += `"${t.id}","${t.date.toISOString()}","${t.category}","${t.type}",${t.amount},"${t.currency}",${t.convertedAmount},"${t.merchant || ''}","${t.notes || ''}"\n`;
+      }
+      return { format: 'csv', data: csv, filename: `finova_report_${new Date().toISOString().split('T')[0]}.csv` };
+    }
+
+    return {
+      format: format || 'pdf',
+      user: { name: user.name, email: user.email, college: user.college },
+      summary: {
+        totalSpent: txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0),
+        totalIncome: txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0)
+      },
+      transactionsCount: txs.length,
+      downloadUrl: `http://localhost:5000/api/reports/download/${user.id}`
+    };
+  }
 }
