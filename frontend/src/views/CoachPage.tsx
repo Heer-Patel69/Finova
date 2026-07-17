@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Send, Sparkles, Shield, TrendingUp, Wallet, Zap } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { API_URL } from '../config';
 
 const quickQuestions = [
   'Can I afford pizza tonight?',
@@ -43,7 +44,7 @@ export default function CoachPage() {
     setChatInput('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/ai-coach/chat', {
+      const response = await fetch(`${API_URL}/api/ai-coach/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: 'user-uuid-1', message: userMsg }),

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { API_URL } from '../config';
 
 // Languages supported
 export type Language = 'en' | 'ka' | 'es' | 'hi';
@@ -255,7 +256,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     try {
       // 1. Fetch Wallets
-      const walletsRes = await fetch(`http://localhost:5000/api/wallets?userId=${activeUser.id}`, {
+      const walletsRes = await fetch(`${API_URL}/api/wallets?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
       });
       if (walletsRes.ok) {
@@ -270,7 +271,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Fetch Active Budgets & Onboarding Settings
-      const budgetRes = await fetch(`http://localhost:5000/api/budgets/active?userId=${activeUser.id}`, {
+      const budgetRes = await fetch(`${API_URL}/api/budgets/active?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
       });
       if (budgetRes.ok) {
@@ -282,7 +283,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const walletsResData = await walletsRes.clone().json();
       if (walletsResData && walletsResData.length > 0) {
         const primaryWalletId = walletsResData[0].id;
-        const txRes = await fetch(`http://localhost:5000/api/transactions?walletId=${primaryWalletId}`, {
+        const txRes = await fetch(`${API_URL}/api/transactions?walletId=${primaryWalletId}`, {
           headers: { 'Authorization': `Bearer ${activeToken}` }
         });
         if (txRes.ok) {
@@ -370,7 +371,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     // Send backend request
     try {
       const activeToken = token || localStorage.getItem('finova_token');
-      const res = await fetch('http://localhost:5000/api/transactions', {
+      const res = await fetch(`${API_URL}/api/transactions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

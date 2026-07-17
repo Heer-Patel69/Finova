@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Shield, Sparkles, User, Mail, Lock, Globe, GraduationCap, DollarSign, Wallet } from 'lucide-react';
 import { Currency } from '../context/AppContext';
+import { API_URL } from '../config';
 
 interface AuthPageProps {
   onAuthSuccess: (token: string, user: { id: string; name: string; baseCurrency: string }) => void;
@@ -36,7 +37,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
     try {
       if (mode === 'login') {
-        const res = await fetch('http://localhost:5000/api/auth/login', {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password }),
@@ -45,7 +46,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
         if (!res.ok) throw new Error(data.message || 'Login failed');
         onAuthSuccess(data.token, data.user);
       } else if (mode === 'register') {
-        const res = await fetch('http://localhost:5000/api/auth/register', {
+        const res = await fetch(`${API_URL}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, name, country, college, baseCurrency }),
@@ -72,7 +73,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
     try {
       const token = localStorage.getItem('finova_token') || '';
-      const res = await fetch('http://localhost:5000/api/auth/onboard', {
+      const res = await fetch(`${API_URL}/api/auth/onboard`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

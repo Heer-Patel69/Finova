@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import { API_URL } from '../config';
 import CategoryIcon, { getCategoryColor } from '../components/CategoryIcon';
 import TransactionItem from '../components/TransactionItem';
 import EmptyState from '../components/EmptyState';
@@ -36,7 +37,7 @@ export default function TrackPage() {
 
   const handleExport = (format: 'csv' | 'pdf') => {
     if (!user) return;
-    window.open(`http://localhost:5000/api/reports/export?userId=${user.id}&format=${format}`);
+    window.open(`${API_URL}/api/reports/export?userId=${user.id}&format=${format}`);
   };
 
   const now = new Date();

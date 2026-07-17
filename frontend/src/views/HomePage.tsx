@@ -6,6 +6,7 @@ import {
   Wallet, Shield, Zap, Calendar, Target as TargetIcon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { API_URL } from '../config';
 import TransactionItem from '../components/TransactionItem';
 
 export default function HomePage() {
@@ -24,7 +25,7 @@ export default function HomePage() {
 
   React.useEffect(() => {
     if (!user || !token) return;
-    fetch(`http://localhost:5000/api/ai-coach/briefing/morning?userId=${user.id}`, {
+    fetch(`${API_URL}/api/ai-coach/briefing/morning?userId=${user.id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then((res) => res.json())
