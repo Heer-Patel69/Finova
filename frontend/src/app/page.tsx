@@ -4,16 +4,17 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Header from '../components/Header';
 import BottomNav from '../components/BottomNav';
-import HomePage from '../pages/HomePage';
-import TrackPage from '../pages/TrackPage';
-import AddTransactionPage from '../pages/AddTransactionPage';
-import CoachPage from '../pages/CoachPage';
-import ProfilePage from '../pages/ProfilePage';
+import HomePage from '../views/HomePage';
+import TrackPage from '../views/TrackPage';
+import AddTransactionPage from '../views/AddTransactionPage';
+import CoachPage from '../views/CoachPage';
+import ProfilePage from '../views/ProfilePage';
+import AuthPage from '../views/AuthPage';
 
 type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile';
 
 export default function AppHome() {
-  const { xp, streak } = useApp();
+  const { xp, streak, token, login } = useApp();
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [showAddSheet, setShowAddSheet] = useState(false);
 
@@ -24,6 +25,10 @@ export default function AppHome() {
       setActiveTab(tab);
     }
   };
+
+  if (!token) {
+    return <AuthPage onAuthSuccess={login} />;
+  }
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Res, BadRequestException } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -396,7 +396,8 @@ export class FinovaController {
   @Get('reports/export')
   async exportReport(
     @Query('userId') userId: string,
-    @Query('format') format: string
+    @Query('format') format: string,
+    @Res() res: any
   ) {
     if (!userId) throw new BadRequestException('User ID required');
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -414,18 +415,95 @@ export class FinovaController {
       for (const t of txs) {
         csv += `"${t.id}","${t.date.toISOString()}","${t.category}","${t.type}",${t.amount},"${t.currency}",${t.convertedAmount},"${t.merchant || ''}","${t.notes || ''}"\n`;
       }
-      return { format: 'csv', data: csv, filename: `finova_report_${new Date().toISOString().split('T')[0]}.csv` };
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=finova_report_${new Date().toISOString().split('T')[0]}.csv`);
+      return res.send(csv);
     }
 
-    return {
-      format: format || 'pdf',
-      user: { name: user.name, email: user.email, college: user.college },
-      summary: {
-        totalSpent: txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0),
-        totalIncome: txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0)
-      },
-      transactionsCount: txs.length,
-      downloadUrl: `http://localhost:5000/api/reports/download/${user.id}`
-    };
+    // PDF / HTML Print Layout
+    const totalSpent = txs.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + t.convertedAmount, 0),
+      totalIncome = txs.filter(t => t.type === 'INCOME').reduce((s, t) => s + t.convertedAmount, 0);
+
+    const htmlReport = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Finova Financial Report</title>
+        <style>
+          body { font-family: sans-serif; padding: 40px; color: #1A1D2E; background: #F8F9FC; }
+          h1 { font-family: sans-serif; color: #6C5CE7; margin-bottom: 5px; }
+          .summary { display: flex; gap: 20px; margin: 30px 0; }
+          .card { flex: 1; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+          .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #718096; }
+          .card p { margin: 0; font-size: 24px; font-weight: bold; }
+          table { width: 100%; border-collapse: collapse; margin-top: 30px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+          th, td { padding: 12px; text-align: left; border-bottom: 1px solid #E2E8F0; }
+          th { background: #EEF0F6; color: #4A5568; }
+          .badge { padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: bold; }
+          .badge-income { background: #E6FFFA; color: #319795; }
+          .badge-expense { background: #FFF5F5; color: #E53E3E; }
+          @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+          <button onclick="window.print()" style="padding: 10px 20px; background: #6C5CE7; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            Print / Save as PDF
+          </button>
+        </div>
+        <h1>Finova Report</h1>
+        <p style="color: #718096;">Generated for ${user.name} (${user.email}) · ${new Date().toLocaleDateString()}</p>
+        
+        <div class="summary">
+          <div class="card">
+            <h3>Total Spent (USD)</h3>
+            <p>$${totalSpent.toFixed(2)}</p>
+          </div>
+          <div class="card">
+            <h3>Total Income (USD)</h3>
+            <p>$${totalIncome.toFixed(2)}</p>
+          </div>
+          <div class="card">
+            <h3>Net Savings (USD)</h3>
+            <p style="color: ${totalIncome - totalSpent >= 0 ? '#319795' : '#E53E3E'}">
+              $${(totalIncome - totalSpent).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <h2>Transactions History</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Merchant</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${txs.map(t => `
+              <tr>
+                <td>${new Date(t.date).toLocaleDateString()}</td>
+                <td>${t.category}</td>
+                <td><span class="badge ${t.type === 'INCOME' ? 'badge-income' : 'badge-expense'}">${t.type}</span></td>
+                <td>${t.merchant || 'Manual'}</td>
+                <td style="font-weight: bold; color: ${t.type === 'INCOME' ? '#319795' : '#1A1D2E'}">
+                  ${t.type === 'INCOME' ? '+' : '-'}${t.currency} ${t.amount}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(htmlReport);
   }
 }

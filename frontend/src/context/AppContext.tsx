@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Languages supported
 export type Language = 'en' | 'ka' | 'es' | 'hi';
@@ -145,27 +145,11 @@ export const translations = {
 export type Currency = 'USD' | 'GEL' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'AED' | 'JPY';
 
 export const currencySymbols: Record<Currency, string> = {
-  USD: '$',
-  GEL: '₾',
-  INR: '₹',
-  EUR: '€',
-  GBP: '£',
-  CAD: 'C$',
-  AUD: 'A$',
-  AED: 'د.إ',
-  JPY: '¥'
+  USD: '$', GEL: '₾', INR: '₹', EUR: '€', GBP: '£', CAD: 'C$', AUD: 'A$', AED: 'د.إ', JPY: '¥'
 };
 
 export const currencyRates: Record<Currency, number> = {
-  USD: 1.0,
-  GEL: 2.70,
-  INR: 83.50,
-  EUR: 0.92,
-  GBP: 0.78,
-  CAD: 1.36,
-  AUD: 1.50,
-  AED: 3.67,
-  JPY: 155.00
+  USD: 1.0, GEL: 2.70, INR: 83.50, EUR: 0.92, GBP: 0.78, CAD: 1.36, AUD: 1.50, AED: 3.67, JPY: 155.00
 };
 
 export interface Transaction {
@@ -206,11 +190,21 @@ export interface SplitGroup {
     amount: number;
     currency: Currency;
     paidBy: string;
-    shares: Record<string, number>; // username: amount
+    shares: Record<string, number>;
   }[];
 }
 
+interface UserProfile {
+  id: string;
+  name: string;
+  baseCurrency: string;
+}
+
 interface AppContextType {
+  user: UserProfile | null;
+  token: string | null;
+  login: (token: string, user: UserProfile) => void;
+  logout: () => void;
   language: Language;
   setLanguage: (lang: Language) => void;
   currency: Currency;
@@ -218,7 +212,7 @@ interface AppContextType {
   wallets: Wallet[];
   setWallets: React.Dispatch<React.SetStateAction<Wallet[]>>;
   transactions: Transaction[];
-  addTransaction: (tx: Omit<Transaction, 'id' | 'convertedAmount'>) => void;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'convertedAmount'>) => Promise<void>;
   goals: SavingGoal[];
   setGoals: React.Dispatch<React.SetStateAction<SavingGoal[]>>;
   updateGoalAmount: (id: string, amount: number) => void;
@@ -233,50 +227,123 @@ interface AppContextType {
   setXp: React.Dispatch<React.SetStateAction<number>>;
   streak: number;
   setStreak: React.Dispatch<React.SetStateAction<number>>;
+  syncData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>('en');
-  const [currency, setCurrency] = useState<Currency>('USD');
+  const [currency, setCurrency] = useState<Currency>('GEL');
   const [monthlyBudget, setMonthlyBudget] = useState<number>(500);
   const [xp, setXp] = useState<number>(340);
   const [streak, setStreak] = useState<number>(5);
 
-  const [wallets, setWallets] = useState<Wallet[]>([
-    { id: 'w1', name: 'Cash', type: 'CASH', balance: 120.00, currency: 'USD' },
-    { id: 'w2', name: 'Bank of Georgia', type: 'BANK_ACCOUNT', balance: 540.00, currency: 'GEL' }
-  ]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [goals, setGoals] = useState<SavingGoal[]>([]);
+  const [splitGroups, setSplitGroups] = useState<SplitGroup[]>([]);
 
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    { id: 't1', amount: 4.50, currency: 'GEL', convertedAmount: 1.67, category: 'Coffee', type: 'EXPENSE', merchant: 'Entree Cafe', walletId: 'w2', date: new Date().toISOString() },
-    { id: 't2', amount: 10.00, currency: 'USD', convertedAmount: 10.00, category: 'Food', type: 'EXPENSE', merchant: 'McDonalds', walletId: 'w1', date: new Date().toISOString() }
-  ]);
+  // Sync data from database
+  const syncData = useCallback(async () => {
+    const activeToken = token || localStorage.getItem('finova_token');
+    const activeUser = user || JSON.parse(localStorage.getItem('finova_user') || 'null');
 
-  const [goals, setGoals] = useState<SavingGoal[]>([
-    { id: 'g1', name: 'New Laptop', targetAmount: 1000.00, currentSaved: 350.00, targetDate: '2026-12-31' },
-    { id: 'g2', name: 'Tuition Payment', targetAmount: 2500.00, currentSaved: 1200.00, targetDate: '2026-09-01' }
-  ]);
+    if (!activeToken || !activeUser) return;
 
-  const [splitGroups, setSplitGroups] = useState<SplitGroup[]>([
-    {
-      id: 'sg1',
-      name: 'Flat 5B Roomies',
-      members: ['Jane', 'Heer', 'David'],
-      expenses: [
-        { description: 'Electricity', amount: 90.00, currency: 'GEL', paidBy: 'Heer', shares: { Jane: 30, Heer: 30, David: 30 } }
-      ]
+    try {
+      // 1. Fetch Wallets
+      const walletsRes = await fetch(`http://localhost:5000/api/wallets?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (walletsRes.ok) {
+        const walletsData = await walletsRes.json();
+        setWallets(walletsData.map((w: any) => ({
+          id: w.id,
+          name: w.name,
+          type: w.type,
+          balance: w.balance,
+          currency: w.currency as Currency
+        })));
+      }
+
+      // 2. Fetch Active Budgets & Onboarding Settings
+      const budgetRes = await fetch(`http://localhost:5000/api/budgets/active?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (budgetRes.ok) {
+        const budgetData = await budgetRes.json();
+        setMonthlyBudget(budgetData.monthlyBudget || 500);
+      }
+
+      // 3. Fetch Transactions (retrieve from the first active wallet)
+      const walletsResData = await walletsRes.clone().json();
+      if (walletsResData && walletsResData.length > 0) {
+        const primaryWalletId = walletsResData[0].id;
+        const txRes = await fetch(`http://localhost:5000/api/transactions?walletId=${primaryWalletId}`, {
+          headers: { 'Authorization': `Bearer ${activeToken}` }
+        });
+        if (txRes.ok) {
+          const txData = await txRes.json();
+          setTransactions(txData.map((t: any) => ({
+            id: t.id,
+            amount: t.amount,
+            currency: t.currency as Currency,
+            convertedAmount: t.convertedAmount,
+            category: t.category,
+            type: t.type as 'INCOME' | 'EXPENSE' | 'TRANSFER',
+            merchant: t.merchant,
+            notes: t.notes,
+            walletId: t.walletId,
+            date: t.date
+          })));
+        }
+      }
+    } catch (err) {
+      console.error('Offline / Failed to sync database items:', err);
     }
-  ]);
+  }, [token, user]);
 
   // Load from local storage for offline support
   useEffect(() => {
     const savedLang = localStorage.getItem('finova_lang');
     if (savedLang) setLanguage(savedLang as Language);
+    
     const savedCur = localStorage.getItem('finova_cur');
     if (savedCur) setCurrency(savedCur as Currency);
+
+    const savedToken = localStorage.getItem('finova_token');
+    const savedUser = localStorage.getItem('finova_user');
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
+    }
   }, []);
+
+  // Sync data automatically when user or token updates
+  useEffect(() => {
+    if (token && user) {
+      syncData();
+    }
+  }, [token, user, syncData]);
+
+  const login = (authToken: string, authUser: UserProfile) => {
+    setToken(authToken);
+    setUser(authUser);
+    localStorage.setItem('finova_token', authToken);
+    localStorage.setItem('finova_user', JSON.stringify(authUser));
+  };
+
+  const logout = () => {
+    setToken(null);
+    setUser(null);
+    setWallets([]);
+    setTransactions([]);
+    localStorage.removeItem('finova_token');
+    localStorage.removeItem('finova_user');
+  };
 
   const changeLanguage = (lang: Language) => {
     setLanguage(lang);
@@ -288,37 +355,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('finova_cur', cur);
   };
 
-  const addTransaction = (tx: Omit<Transaction, 'id' | 'convertedAmount'>) => {
+  const addTransaction = async (tx: Omit<Transaction, 'id' | 'convertedAmount'>) => {
+    // Optimistic offline update
     const rate = currencyRates[tx.currency];
-    const convertedAmount = tx.amount / rate; // Convert original to USD base
-    const newTx: Transaction = {
+    const convertedAmount = tx.amount / rate;
+    const optimisticTx: Transaction = {
       ...tx,
       id: Math.random().toString(36).substring(7),
       convertedAmount
     };
 
-    setTransactions(prev => [newTx, ...prev]);
+    setTransactions(prev => [optimisticTx, ...prev]);
 
-    // Update wallet balance
-    setWallets(prev => prev.map(w => {
-      if (w.id === tx.walletId) {
-        let balanceDiff = tx.amount;
-        // If wallet currency differs from transaction currency, convert
-        if (w.currency !== tx.currency) {
-          const txInUSD = tx.amount / currencyRates[tx.currency];
-          balanceDiff = txInUSD * currencyRates[w.currency];
-        }
-        
-        return {
-          ...w,
-          balance: tx.type === 'INCOME' ? w.balance + balanceDiff : w.balance - balanceDiff
-        };
+    // Send backend request
+    try {
+      const activeToken = token || localStorage.getItem('finova_token');
+      const res = await fetch('http://localhost:5000/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${activeToken}`
+        },
+        body: JSON.stringify(tx)
+      });
+      if (res.ok) {
+        // Sync complete database states
+        await syncData();
+        setXp(x => x + 15);
       }
-      return w;
-    }));
-
-    // Grant XP for logging transaction
-    setXp(x => x + 15);
+    } catch {
+      console.warn('Saved transaction locally (offline).');
+      // Update local wallet balance on offline fallback
+      setWallets(prev => prev.map(w => {
+        if (w.id === tx.walletId) {
+          let balanceDiff = tx.amount;
+          if (w.currency !== tx.currency) {
+            const txInUSD = tx.amount / currencyRates[tx.currency];
+            balanceDiff = txInUSD * currencyRates[w.currency];
+          }
+          return {
+            ...w,
+            balance: tx.type === 'INCOME' ? w.balance + balanceDiff : w.balance - balanceDiff
+          };
+        }
+        return w;
+      }));
+    }
   };
 
   const updateGoalAmount = (id: string, amount: number) => {
@@ -356,7 +438,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return translations[language][key] || translations['en'][key];
   };
 
-  // Convert USD amount to current selected currency for representation
   const formatCurrency = (amountInUSD: number) => {
     const rate = currencyRates[currency];
     const localAmount = amountInUSD * rate;
@@ -365,6 +446,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
+      user,
+      token,
+      login,
+      logout,
       language,
       setLanguage: changeLanguage,
       currency,
@@ -386,7 +471,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       xp,
       setXp,
       streak,
-      setStreak
+      setStreak,
+      syncData
     }}>
       {children}
     </AppContext.Provider>

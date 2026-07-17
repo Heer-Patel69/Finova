@@ -27,12 +27,17 @@ const filterLabels: Record<DateFilter, string> = {
 };
 
 export default function TrackPage() {
-  const { transactions, formatCurrency, monthlyBudget } = useApp();
+  const { transactions, formatCurrency, monthlyBudget, user, token } = useApp();
   const { resolvedTheme } = useTheme();
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'EXPENSE' | 'INCOME'>('ALL');
   const [showAllTx, setShowAllTx] = useState(false);
+
+  const handleExport = (format: 'csv' | 'pdf') => {
+    if (!user) return;
+    window.open(`http://localhost:5000/api/reports/export?userId=${user.id}&format=${format}`);
+  };
 
   const now = new Date();
 
@@ -125,9 +130,25 @@ export default function TrackPage() {
   return (
     <section className="space-y-5 pb-4">
       {/* Page Title */}
-      <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
-        Analytics
-      </h1>
+      <div className="flex justify-between items-center">
+        <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
+          Analytics
+        </h1>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleExport('csv')}
+            className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1 font-heading"
+          >
+            <Download className="w-3.5 h-3.5" /> CSV
+          </button>
+          <button
+            onClick={() => handleExport('pdf')}
+            className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1 font-heading"
+          >
+            <Download className="w-3.5 h-3.5" /> PDF
+          </button>
+        </div>
+      </div>
 
       {/* Date Filter Pills */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">

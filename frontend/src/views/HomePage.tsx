@@ -11,8 +11,30 @@ import TransactionItem from '../components/TransactionItem';
 export default function HomePage() {
   const {
     wallets, transactions, goals, formatCurrency, monthlyBudget,
-    xp, streak, t
+    xp, streak, t, user, token
   } = useApp();
+
+  const [brief, setBrief] = React.useState<{
+    greeting: string;
+    statusSummary: string;
+    dailySafeSpending: number;
+    dailyQuest: string;
+    coachTip: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!user || !token) return;
+    fetch(`http://localhost:5000/api/ai-coach/briefing/morning?userId=${user.id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.dailySafeSpending) {
+          setBrief(data);
+        }
+      })
+      .catch((err) => console.error('Offline / failed to fetch AI morning brief:', err));
+  }, [user, token]);
 
   const rates: Record<string, number> = {
     USD: 1.0, GEL: 2.70, INR: 83.50, EUR: 0.92, GBP: 0.78,
@@ -45,6 +67,8 @@ export default function HomePage() {
     .filter((tx) => tx.type === 'INCOME' && new Date(tx.date).getMonth() === now.getMonth())
     .reduce((s, tx) => s + tx.convertedAmount, 0);
 
+  const activeDailySafeSpend = brief ? brief.dailySafeSpending : dailySafeSpend;
+
   // Financial health (0-100)
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalSpent) / totalIncome) * 100 : 50;
   const budgetHealth = budgetPercent < 80 ? 100 : budgetPercent < 100 ? 60 : 20;
@@ -67,7 +91,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/15">
           <div>
             <p className="text-white/50 text-[11px] font-medium">{t('safeSpend')}</p>
-            <p className="text-white font-heading font-bold text-lg">{formatCurrency(dailySafeSpend)}</p>
+            <p className="text-white font-heading font-bold text-lg">{formatCurrency(activeDailySafeSpend)}</p>
           </div>
           <div>
             <p className="text-white/50 text-[11px] font-medium">{t('remainingBudget')}</p>
@@ -145,9 +169,9 @@ export default function HomePage() {
           <div>
             <h3 className="font-heading font-bold text-sm text-white">{t('aiTip')}</h3>
             <p className="text-xs text-white/80 mt-1 leading-relaxed">
-              {todaySpent < dailySafeSpend
+              {brief ? brief.coachTip : (todaySpent < dailySafeSpend
                 ? `Great start! You've only spent ${formatCurrency(todaySpent)} today. You have ${formatCurrency(dailySafeSpend - todaySpent)} left for safe spending.`
-                : `Heads up! You've exceeded today's safe spending by ${formatCurrency(todaySpent - dailySafeSpend)}. Consider skipping non-essentials.`
+                : `Heads up! You've exceeded today's safe spending by ${formatCurrency(todaySpent - dailySafeSpend)}. Consider skipping non-essentials.`)
               }
             </p>
           </div>
@@ -163,10 +187,10 @@ export default function HomePage() {
           <div className="flex justify-between items-center p-3 rounded-xl" style={{ background: 'var(--bg-tertiary)' }}>
             <div>
               <p className="font-heading font-semibold text-xs" style={{ color: 'var(--text-primary)' }}>
-                Stay Under Daily Safe Spend
+                {brief ? brief.dailyQuest : 'Stay Under Daily Safe Spend'}
               </p>
               <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                {formatCurrency(todaySpent)} / {formatCurrency(dailySafeSpend)}
+                {formatCurrency(todaySpent)} / {formatCurrency(activeDailySafeSpend)}
               </p>
             </div>
             <span className="pill pill-active text-[11px] py-1 px-2.5">+30 XP</span>
