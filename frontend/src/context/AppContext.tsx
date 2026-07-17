@@ -382,6 +382,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [token, user, syncData]);
 
   const login = (authToken: string, authUser: UserProfile) => {
+    // Aggressively clear any residual state before setting a new user
+    setWallets([]);
+    setTransactions([]);
+    setGoals([]);
+    setSplitGroups([]);
+    setXp(0);
+    setStreak(0);
+    setHighestStreak(0);
+    setTotalActiveDays(0);
+    setDailyActivities([]);
+    setUnlockedBadges([]);
+    setMonthlyBudget(500);
+    
     setToken(authToken);
     setUser(authUser);
     localStorage.setItem('finova_token', authToken);
@@ -393,6 +406,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setWallets([]);
     setTransactions([]);
+    setGoals([]);
+    setSplitGroups([]);
+    setXp(0);
+    setStreak(0);
+    setHighestStreak(0);
+    setTotalActiveDays(0);
+    setDailyActivities([]);
+    setUnlockedBadges([]);
+    setMonthlyBudget(500);
+
     localStorage.removeItem('finova_token');
     localStorage.removeItem('finova_user');
   };

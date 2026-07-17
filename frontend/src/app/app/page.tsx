@@ -13,7 +13,7 @@ import AuthPage from '../../views/AuthPage';
 import SplitPage from '../../views/SplitPage';
 import SideNav from '../../components/SideNav';
 
-type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile' | 'split';
+export type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile' | 'split';
 
 export default function AppHome() {
   const { xp, streak, token, login } = useApp();
@@ -50,7 +50,7 @@ export default function AppHome() {
         {activeTab === 'track' && <TrackPage />}
         {activeTab === 'coach' && <CoachPage />}
         {activeTab === 'split' && <SplitPage />}
-            {activeTab === 'profile' && <ProfilePage />}
+        {activeTab === 'profile' && <ProfilePage />}
           </div>
         </main>
 

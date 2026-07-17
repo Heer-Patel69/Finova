@@ -23,9 +23,9 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
   // Onboarding states
   const [userId, setUserId] = useState('');
   const [monthlyBudget, setMonthlyBudget] = useState('500');
-  const [cashBalance, setCashBalance] = useState('0');
-  const [bankBalance, setBankBalance] = useState('0');
-  const [cardBalance, setCardBalance] = useState('0');
+  const [setupWallets, setSetupWallets] = useState<{name: string, type: 'CASH' | 'BANK_ACCOUNT' | 'CREDIT_CARD' | 'DIGITAL_WALLET', balance: string}[]>([
+    { name: 'Cash', type: 'CASH', balance: '0' }
+  ]);
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,9 +82,12 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
         body: JSON.stringify({
           userId,
           monthlyBudget: parseFloat(monthlyBudget) || 500,
-          cashBalance: parseFloat(cashBalance) || 0,
-          bankBalance: parseFloat(bankBalance) || 0,
-          cardBalance: parseFloat(cardBalance) || 0,
+          wallets: setupWallets.map(w => ({
+            name: w.name,
+            type: w.type,
+            balance: parseFloat(w.balance) || 0,
+            currency: baseCurrency
+          }))
         }),
       });
       const data = await res.json();
@@ -254,37 +257,65 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Cash in Hand</label>
-                <input
-                  type="number"
-                  value={cashBalance}
-                  onChange={(e) => setCashBalance(e.target.value)}
-                  placeholder="0.00"
-                  className="input text-sm font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Bank Acc</label>
-                <input
-                  type="number"
-                  value={bankBalance}
-                  onChange={(e) => setBankBalance(e.target.value)}
-                  placeholder="0.00"
-                  className="input text-sm font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Cards</label>
-                <input
-                  type="number"
-                  value={cardBalance}
-                  onChange={(e) => setCardBalance(e.target.value)}
-                  placeholder="0.00"
-                  className="input text-sm font-bold"
-                />
-              </div>
+            <div className="space-y-3 mt-4">
+              <label className="block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Payment Methods</label>
+              
+              {setupWallets.map((wallet, index) => (
+                <div key={index} className="flex gap-2 items-center bg-[#1C1D2C] p-2 rounded-xl border border-white/5">
+                  <select 
+                    value={wallet.type}
+                    onChange={(e) => {
+                      const newWallets = [...setupWallets];
+                      newWallets[index].type = e.target.value as any;
+                      setSetupWallets(newWallets);
+                    }}
+                    className="bg-transparent text-xs font-semibold p-1 outline-none text-gray-300 border-r border-white/10 w-28"
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="BANK_ACCOUNT">Bank Acc</option>
+                    <option value="CREDIT_CARD">Credit Card</option>
+                    <option value="DIGITAL_WALLET">Digital Wallet</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    value={wallet.name}
+                    onChange={(e) => {
+                      const newWallets = [...setupWallets];
+                      newWallets[index].name = e.target.value;
+                      setSetupWallets(newWallets);
+                    }}
+                    placeholder="Name (e.g. Chase)"
+                    className="bg-transparent text-sm text-white w-full outline-none px-1"
+                  />
+
+                  <input
+                    type="number"
+                    value={wallet.balance}
+                    onChange={(e) => {
+                      const newWallets = [...setupWallets];
+                      newWallets[index].balance = e.target.value;
+                      setSetupWallets(newWallets);
+                    }}
+                    placeholder="0.00"
+                    className="bg-transparent text-sm font-bold text-white w-20 text-right outline-none pr-1"
+                  />
+
+                  {setupWallets.length > 1 && (
+                    <button type="button" onClick={() => setSetupWallets(setupWallets.filter((_, i) => i !== index))} className="text-red-400 hover:text-red-300 pr-1">
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              <button 
+                type="button" 
+                onClick={() => setSetupWallets([...setupWallets, { name: 'Bank Account', type: 'BANK_ACCOUNT', balance: '0' }])}
+                className="w-full py-2 border border-dashed border-white/20 rounded-xl text-gray-400 text-xs font-semibold hover:bg-white/5 transition-colors"
+              >
+                + Add Another Account
+              </button>
             </div>
 
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-sm animate-pulse-glow">

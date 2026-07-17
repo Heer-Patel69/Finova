@@ -185,22 +185,31 @@ export default function AddTransactionPage({ onClose }: AddTransactionPageProps)
             <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
               Wallet
             </label>
-            <div className="flex gap-2 overflow-x-auto no-scrollbar">
-              {wallets.map((w) => (
-                <button
-                  key={w.id}
-                  type="button"
-                  onClick={() => setWalletId(w.id)}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold flex-shrink-0 transition-all"
-                  style={{
-                    background: walletId === w.id ? 'var(--gradient-primary)' : 'var(--bg-tertiary)',
-                    color: walletId === w.id ? 'white' : 'var(--text-secondary)',
-                    boxShadow: walletId === w.id ? 'var(--shadow-button)' : 'none',
-                  }}
-                >
-                  {w.name}
-                </button>
-              ))}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              {wallets.map((w) => {
+                let WalletIcon = "💰";
+                if (w.type === 'BANK_ACCOUNT') WalletIcon = "🏦";
+                else if (w.type === 'CREDIT_CARD') WalletIcon = "💳";
+                else if (w.type === 'CASH') WalletIcon = "💵";
+                else if (w.type === 'DIGITAL_WALLET') WalletIcon = "📱";
+
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => setWalletId(w.id)}
+                    className="flex flex-col items-start gap-1 px-4 py-2.5 rounded-xl text-xs font-semibold flex-shrink-0 transition-all border border-white/5"
+                    style={{
+                      background: walletId === w.id ? 'var(--gradient-primary)' : 'var(--bg-tertiary)',
+                      color: walletId === w.id ? 'white' : 'var(--text-secondary)',
+                      boxShadow: walletId === w.id ? 'var(--shadow-button)' : 'none',
+                    }}
+                  >
+                    <span className="text-lg">{WalletIcon}</span>
+                    <span>{w.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -87,21 +87,24 @@ export class FinovaController {
 
   @Patch('auth/onboard')
   async onboard(@Body() body: any) {
-    const { userId, monthlyBudget, cashBalance, bankBalance, cardBalance } = body;
+    const { userId, monthlyBudget, wallets } = body;
     if (!userId) throw new BadRequestException('User ID is required');
 
-    const walletsToCreate: { name: string, type: 'CASH' | 'BANK_ACCOUNT' | 'CREDIT_CARD', balance: number }[] = [];
-    if (cashBalance > 0 || (bankBalance === 0 && cardBalance === 0)) {
-      walletsToCreate.push({ name: 'Cash', type: 'CASH', balance: cashBalance || 0 });
-    }
-    if (bankBalance > 0) {
-      walletsToCreate.push({ name: 'Bank Account', type: 'BANK_ACCOUNT', balance: bankBalance });
-    }
-    if (cardBalance > 0) {
-      walletsToCreate.push({ name: 'Credit Card', type: 'CREDIT_CARD', balance: cardBalance });
-    }
+    let totalInitialBalance = 0;
+    const walletsToCreate = Array.isArray(wallets) ? wallets.map(w => {
+      totalInitialBalance += (w.balance || 0);
+      return {
+        name: w.name || 'Wallet',
+        type: w.type || 'CASH',
+        balance: w.balance || 0,
+        currency: w.currency || 'USD'
+      };
+    }) : [];
 
-    const totalInitialBalance = (cashBalance || 0) + (bankBalance || 0) + (cardBalance || 0);
+    // Fallback if empty
+    if (walletsToCreate.length === 0) {
+      walletsToCreate.push({ name: 'Cash', type: 'CASH', balance: 0, currency: 'USD' });
+    }
 
     await this.prisma.user.update({
       where: { id: userId },
