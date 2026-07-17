@@ -101,10 +101,10 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
   return (
     <div
-      className="flex-1 flex flex-col justify-center items-center px-6 min-h-screen py-12"
+      className="flex-1 flex flex-col items-center px-4 sm:px-6 min-h-screen py-8 sm:py-12 overflow-y-auto"
       style={{ background: 'var(--bg-primary)' }}
     >
-      <div className="w-full max-w-md space-y-6">
+      <div className="w-full max-w-md space-y-5" style={{ paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}>
         {/* Brand Logo */}
         <div className="text-center">
           <span
@@ -221,7 +221,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                   <select
                     value={baseCurrency}
                     onChange={(e) => setBaseCurrency(e.target.value as Currency)}
-                    className="input text-sm bg-white font-heading font-bold"
+                    className="input text-sm font-heading font-bold"
                   >
                     <option value="GEL">GEL (₾)</option>
                     <option value="USD">USD ($)</option>
@@ -283,7 +283,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                 <select
                   value={walletType}
                   onChange={(e) => setWalletType(e.target.value)}
-                  className="input text-sm bg-white font-semibold"
+                  className="input text-sm font-semibold"
                 >
                   <option value="CASH">Cash</option>
                   <option value="BANK_ACCOUNT">Bank Account</option>
