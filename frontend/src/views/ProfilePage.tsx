@@ -158,7 +158,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <section className="space-y-5 pb-4">
+    <div className="flex flex-col gap-6 w-full animate-fade-in-up">
       {/* Profile Card */}
       <div className="card-gradient p-5 rounded-2xl text-center animate-fade-in-up">
         <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-heading font-bold"
@@ -196,88 +196,96 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Budget */}
-      <div className="card p-4 animate-fade-in-up stagger-1">
-        <h3 className="font-heading font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
-          Monthly Budget
-        </h3>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            value={monthlyBudget}
-            onChange={(e) => setMonthlyBudget(parseFloat(e.target.value) || 0)}
-            className="input flex-1 text-sm font-heading font-bold"
-          />
-          <span className="flex items-center px-3 rounded-xl text-xs font-bold font-heading"
-            style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
-            {currency}
-          </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Preferences */}
+        <div className="flex flex-col gap-6">
+          {/* Budget */}
+          <div className="card p-5">
+            <h3 className="font-heading font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>
+              Monthly Budget
+            </h3>
+            <div className="flex gap-3">
+              <input
+                type="number"
+                value={monthlyBudget}
+                onChange={(e) => setMonthlyBudget(parseFloat(e.target.value) || 0)}
+                className="input flex-1 text-base font-heading font-bold"
+              />
+              <span className="flex items-center px-4 rounded-xl text-sm font-bold font-heading"
+                style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>
+                {currency}
+              </span>
+            </div>
+          </div>
+
+          {/* Menu Items */}
+          <div className="card overflow-hidden">
+            {menuItems.map((item, i) => (
+              <button
+                key={item.label}
+                onClick={() => setSection(item.section)}
+                className="w-full flex items-center gap-4 p-5 transition-all active:scale-[0.98] hover:bg-black/5 dark:hover:bg-white/5"
+                style={{
+                  borderBottom: i < menuItems.length - 1 ? '1px solid var(--border-secondary)' : 'none',
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-tertiary)' }}>
+                  <item.icon className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
+                </div>
+                <span className="text-sm mr-2" style={{ color: 'var(--text-tertiary)' }}>{item.desc}</span>
+                <ChevronRight className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column: Settings */}
+        <div className="flex flex-col gap-6">
+          {/* More Settings */}
+          <div className="card overflow-hidden">
+            {[
+              { icon: Bell, label: 'Notifications' },
+              { icon: Shield, label: 'Security' },
+              { icon: Download, label: 'Export Data' },
+              { icon: HelpCircle, label: 'Help & Support' },
+              { icon: MessageCircle, label: 'Feedback' },
+              { icon: Star, label: 'Rate Finova' },
+            ].map((item, i) => (
+              <button
+                key={item.label}
+                className="w-full flex items-center gap-4 p-5 transition-all active:scale-[0.98] hover:bg-black/5 dark:hover:bg-white/5"
+                style={{
+                  borderBottom: i < 5 ? '1px solid var(--border-secondary)' : 'none',
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-tertiary)' }}>
+                  <item.icon className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
+                </div>
+                <span className="text-base font-semibold flex-1 text-left" style={{ color: 'var(--text-primary)' }}>{item.label}</span>
+                <ChevronRight className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
+              </button>
+            ))}
+          </div>
+
+          {/* Logout */}
+          <button
+            onClick={logout}
+            className="w-full py-4 rounded-xl text-base font-heading font-bold flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+            style={{ background: '#FF6B6B15', color: '#FF6B6B' }}
+          >
+            <LogOut className="w-5 h-5" />
+            Log Out
+          </button>
         </div>
       </div>
-
-      {/* Menu Items */}
-      <div className="card overflow-hidden animate-fade-in-up stagger-2">
-        {menuItems.map((item, i) => (
-          <button
-            key={item.label}
-            onClick={() => setSection(item.section)}
-            className="w-full flex items-center gap-3 p-4 transition-all active:scale-[0.98]"
-            style={{
-              borderBottom: i < menuItems.length - 1 ? '1px solid var(--border-secondary)' : 'none',
-            }}
-          >
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-tertiary)' }}>
-              <item.icon className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{item.label}</p>
-            </div>
-            <span className="text-xs mr-1" style={{ color: 'var(--text-tertiary)' }}>{item.desc}</span>
-            <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-          </button>
-        ))}
-      </div>
-
-      {/* More Settings */}
-      <div className="card overflow-hidden animate-fade-in-up stagger-3">
-        {[
-          { icon: Bell, label: 'Notifications' },
-          { icon: Shield, label: 'Security' },
-          { icon: Download, label: 'Export Data' },
-          { icon: HelpCircle, label: 'Help & Support' },
-          { icon: MessageCircle, label: 'Feedback' },
-          { icon: Star, label: 'Rate Finova' },
-        ].map((item, i) => (
-          <button
-            key={item.label}
-            className="w-full flex items-center gap-3 p-4 transition-all active:scale-[0.98]"
-            style={{
-              borderBottom: i < 5 ? '1px solid var(--border-secondary)' : 'none',
-            }}
-          >
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--bg-tertiary)' }}>
-              <item.icon className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
-            </div>
-            <span className="text-sm font-semibold flex-1 text-left" style={{ color: 'var(--text-primary)' }}>{item.label}</span>
-            <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-          </button>
-        ))}
-      </div>
-
-      {/* Logout */}
-      <button
-        onClick={logout}
-        className="w-full py-3.5 rounded-xl text-sm font-heading font-bold flex items-center justify-center gap-2"
-        style={{ background: '#FF6B6B15', color: '#FF6B6B' }}
-      >
-        <LogOut className="w-4 h-4" />
-        Log Out
-      </button>
 
       <p className="text-center text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
         Finova v2.0 · Made for students 🎓
       </p>
-    </section>
+    </div>
   );
 }
 

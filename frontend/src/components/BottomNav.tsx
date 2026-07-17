@@ -28,7 +28,7 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
-    <nav className="bottom-nav fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 py-2 flex justify-between items-center z-50 safe-bottom">
+    <nav className="bottom-nav fixed bottom-0 left-0 right-0 w-full md:hidden px-4 py-2 flex justify-between items-center z-50 safe-bottom bg-[#0a0a0f]/90 backdrop-blur-xl border-t border-white/10">
       {tabs.map((tab) => {
         if (tab.id === 'add') {
           return (

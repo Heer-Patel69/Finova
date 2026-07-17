@@ -11,6 +11,7 @@ import CoachPage from '../../views/CoachPage';
 import ProfilePage from '../../views/ProfilePage';
 import AuthPage from '../../views/AuthPage';
 import SplitPage from '../../views/SplitPage';
+import SideNav from '../../components/SideNav';
 
 type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile' | 'split';
 
@@ -33,24 +34,32 @@ export default function AppHome() {
 
   return (
     <div
-      className="flex-1 flex flex-col max-w-md mx-auto w-full min-h-screen relative pb-24"
+      className="flex h-screen w-full overflow-hidden relative"
       style={{ background: 'var(--bg-primary)' }}
     >
-      <Header xp={xp} streak={streak} />
+      <SideNav activeTab={activeTab} onTabChange={handleTabChange} />
 
-      <main className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <div className="md:hidden">
+          <Header xp={xp} streak={streak} />
+        </div>
+
+        <main className="flex-1 overflow-y-auto w-full pb-24 md:pb-6 p-4 md:p-8">
+          <div className="mx-auto w-full max-w-7xl">
         {activeTab === 'home' && <HomePage />}
         {activeTab === 'track' && <TrackPage />}
         {activeTab === 'coach' && <CoachPage />}
         {activeTab === 'split' && <SplitPage />}
-        {activeTab === 'profile' && <ProfilePage />}
-      </main>
+            {activeTab === 'profile' && <ProfilePage />}
+          </div>
+        </main>
 
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {showAddSheet && (
-        <AddTransactionPage onClose={() => setShowAddSheet(false)} />
-      )}
+        {showAddSheet && (
+          <AddTransactionPage onClose={() => setShowAddSheet(false)} />
+        )}
+      </div>
     </div>
   );
 }

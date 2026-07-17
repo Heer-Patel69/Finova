@@ -147,7 +147,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Heer Patel"
+                    placeholder="e.g., Alex"
                     className="input pl-10 text-sm"
                   />
                 </div>

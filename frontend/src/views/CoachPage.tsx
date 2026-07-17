@@ -86,9 +86,9 @@ export default function CoachPage() {
   };
 
   return (
-    <section className="flex flex-col h-[calc(100vh-140px)]">
-      {/* Dashboard Cards */}
-      <div className="flex-shrink-0 space-y-4 mb-4">
+    <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)] lg:h-[calc(100vh-100px)] w-full animate-fade-in-up">
+      {/* Left Column: Dashboard Cards */}
+      <div className="flex-shrink-0 lg:w-1/3 space-y-6 mb-4 lg:mb-0">
         <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
           AI Coach
         </h1>
@@ -118,20 +118,24 @@ export default function CoachPage() {
         </div>
 
         {/* Quick Questions */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {quickQuestions.map((q) => (
-            <button
-              key={q}
-              onClick={() => handleSend(q)}
-              className="pill text-[11px] flex-shrink-0"
-            >
-              <Zap className="w-3 h-3" /> {q}
-            </button>
-          ))}
+        <div className="flex flex-col gap-2">
+          <h3 className="font-heading font-semibold text-sm mb-2" style={{ color: 'var(--text-primary)' }}>Quick Questions</h3>
+          <div className="flex flex-wrap lg:flex-col gap-2 overflow-x-auto no-scrollbar pb-2">
+            {quickQuestions.map((q) => (
+              <button
+                key={q}
+                onClick={() => handleSend(q)}
+                className="pill text-xs flex-shrink-0 justify-start w-fit lg:w-full py-2.5 px-4"
+              >
+                <Zap className="w-3.5 h-3.5 mr-2" /> {q}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Chat Messages */}
+      {/* Right Column: Chat Interface */}
+      <div className="flex-1 flex flex-col card p-4 lg:p-6 shadow-sm border border-white/5">
       <div
         className="flex-1 overflow-y-auto space-y-3 px-1 mb-3"
         style={{ minHeight: 0 }}
@@ -152,18 +156,20 @@ export default function CoachPage() {
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 flex-shrink-0">
+      <form onSubmit={handleSubmit} className="flex gap-2 flex-shrink-0 mt-2">
         <input
           type="text"
           value={chatInput}
           onChange={(e) => setChatInput(e.target.value)}
           placeholder="Ask about your finances..."
-          className="input flex-1 text-sm"
+          className="input flex-1 text-sm bg-black/5 dark:bg-white/5 border-transparent focus:border-indigo-500/50"
         />
-        <button type="submit" className="btn-primary p-3 rounded-xl">
+        <button type="submit" className="btn-primary p-3 px-5 rounded-xl flex items-center justify-center gap-2 font-semibold">
           <Send className="w-4 h-4" />
+          <span className="hidden sm:inline">Send</span>
         </button>
       </form>
-    </section>
+      </div>
+    </div>
   );
 }

@@ -160,8 +160,8 @@ export default function TrackPage() {
   const visibleTx = showAllTx ? filtered : filtered.slice(0, 10);
 
   return (
-    <section className="space-y-5 pb-4">
-      {/* Page Title */}
+    <div className="flex flex-col gap-6 w-full animate-fade-in-up">
+      {/* Page Title & Actions */}
       <div className="flex justify-between items-center">
         <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>
           Analytics
@@ -182,200 +182,214 @@ export default function TrackPage() {
         </div>
       </div>
 
-      {/* Date Filter Pills */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        {(Object.keys(filterLabels) as DateFilter[]).map((f) => (
-          <button
-            key={f}
-            onClick={() => setDateFilter(f)}
-            className={`pill ${dateFilter === f ? 'pill-active' : ''}`}
-          >
-            {filterLabels[f]}
-          </button>
-        ))}
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Analytics & Charts */}
+        <div className="flex flex-col gap-6">
+          {/* Date Filter Pills */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {(Object.keys(filterLabels) as DateFilter[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setDateFilter(f)}
+                className={`pill ${dateFilter === f ? 'pill-active' : ''} whitespace-nowrap`}
+              >
+                {filterLabels[f]}
+              </button>
+            ))}
+          </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card p-3.5 animate-fade-in-up stagger-1">
-          <div className="flex items-center gap-2 mb-1">
-            <ArrowUpRight className="w-4 h-4" style={{ color: '#FF6B6B' }} />
-            <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Spending</span>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="card p-4 animate-fade-in-up stagger-1">
+              <div className="flex items-center gap-2 mb-2">
+                <ArrowUpRight className="w-5 h-5" style={{ color: '#FF6B6B' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Spending</span>
+              </div>
+              <p className="font-heading font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
+                {formatCurrency(totalSpending)}
+              </p>
+            </div>
+            <div className="card p-4 animate-fade-in-up stagger-2">
+              <div className="flex items-center gap-2 mb-2">
+                <ArrowDownLeft className="w-5 h-5" style={{ color: '#00B894' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Income</span>
+              </div>
+              <p className="font-heading font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
+                {formatCurrency(totalIncome)}
+              </p>
+            </div>
+            <div className="card p-4 animate-fade-in-up stagger-3">
+              <div className="flex items-center gap-2 mb-2">
+                {netBalance >= 0
+                  ? <TrendingUp className="w-5 h-5" style={{ color: '#00B894' }} />
+                  : <TrendingDown className="w-5 h-5" style={{ color: '#FF6B6B' }} />
+                }
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Net</span>
+              </div>
+              <p className="font-heading font-bold text-2xl" style={{ color: netBalance >= 0 ? '#00B894' : '#FF6B6B' }}>
+                {netBalance >= 0 ? '+' : ''}{formatCurrency(netBalance)}
+              </p>
+            </div>
+            <div className="card p-4 animate-fade-in-up stagger-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Filter className="w-5 h-5" style={{ color: '#A29BFE' }} />
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>Transactions</span>
+              </div>
+              <p className="font-heading font-bold text-2xl" style={{ color: 'var(--text-primary)' }}>
+                {txCount}
+              </p>
+            </div>
           </div>
-          <p className="font-heading font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-            {formatCurrency(totalSpending)}
-          </p>
-        </div>
-        <div className="card p-3.5 animate-fade-in-up stagger-2">
-          <div className="flex items-center gap-2 mb-1">
-            <ArrowDownLeft className="w-4 h-4" style={{ color: '#00B894' }} />
-            <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Income</span>
-          </div>
-          <p className="font-heading font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-            {formatCurrency(totalIncome)}
-          </p>
-        </div>
-        <div className="card p-3.5 animate-fade-in-up stagger-3">
-          <div className="flex items-center gap-2 mb-1">
-            {netBalance >= 0
-              ? <TrendingUp className="w-4 h-4" style={{ color: '#00B894' }} />
-              : <TrendingDown className="w-4 h-4" style={{ color: '#FF6B6B' }} />
-            }
-            <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Net</span>
-          </div>
-          <p className="font-heading font-bold text-lg" style={{ color: netBalance >= 0 ? '#00B894' : '#FF6B6B' }}>
-            {netBalance >= 0 ? '+' : ''}{formatCurrency(netBalance)}
-          </p>
-        </div>
-        <div className="card p-3.5 animate-fade-in-up stagger-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Filter className="w-4 h-4" style={{ color: '#A29BFE' }} />
-            <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>Transactions</span>
-          </div>
-          <p className="font-heading font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-            {txCount}
-          </p>
-        </div>
-      </div>
 
-      {/* Spending Chart */}
-      {dailyData.length > 0 && (
-        <div className="card p-4 animate-fade-in-up stagger-5">
-          <h3 className="font-heading font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>
-            Daily Spending
-          </h3>
-          <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dailyData} barSize={20}>
-              <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: chartTextColor, fontSize: 11 }} />
-              <YAxis hide />
-              <Tooltip
-                contentStyle={{
-                  background: resolvedTheme === 'dark' ? '#222545' : '#FFF',
-                  border: 'none',
-                  borderRadius: 12,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                  fontSize: 12,
-                  color: resolvedTheme === 'dark' ? '#E8EAF6' : '#1A1D2E',
-                }}
-              />
-              <Bar dataKey="amount" fill="#6C5CE7" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Category Breakdown */}
-      {categoryData.length > 0 && (
-        <div className="card p-4 animate-fade-in-up stagger-6">
-          <h3 className="font-heading font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>
-            Category Breakdown
-          </h3>
-          <div className="flex gap-4 items-center">
-            <div className="w-28 h-28 flex-shrink-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={50}
-                    paddingAngle={3}
-                    dataKey="value"
-                    strokeWidth={0}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
+          {/* Spending Chart */}
+          {dailyData.length > 0 && (
+            <div className="card p-5 animate-fade-in-up stagger-5">
+              <h3 className="font-heading font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>
+                Daily Spending
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={dailyData} barSize={24} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: chartTextColor, fontSize: 12 }} dy={10} />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{
+                      background: resolvedTheme === 'dark' ? '#222545' : '#FFF',
+                      border: 'none',
+                      borderRadius: 12,
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                      fontSize: 12,
+                      color: resolvedTheme === 'dark' ? '#E8EAF6' : '#1A1D2E',
+                    }}
+                    cursor={{ fill: 'transparent' }}
+                  />
+                  <Bar dataKey="amount" fill="#6C5CE7" radius={[6, 6, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex-1 space-y-2">
-              {categoryData.slice(0, 4).map((cat) => {
-                const pct = totalSpending > 0 ? Math.round((cat.value / totalSpending) * 100) : 0;
-                return (
-                  <div key={cat.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ background: cat.color }} />
-                      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{cat.name}</span>
-                    </div>
-                    <span className="text-xs font-bold font-heading" style={{ color: 'var(--text-primary)' }}>{pct}%</span>
-                  </div>
-                );
-              })}
+          )}
+
+          {/* Category Breakdown */}
+          {categoryData.length > 0 && (
+            <div className="card p-5 animate-fade-in-up stagger-6">
+              <h3 className="font-heading font-semibold text-base mb-6" style={{ color: 'var(--text-primary)' }}>
+                Category Breakdown
+              </h3>
+              <div className="flex flex-col sm:flex-row gap-8 items-center">
+                <div className="w-32 h-32 flex-shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={64}
+                        paddingAngle={3}
+                        dataKey="value"
+                        strokeWidth={0}
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 space-y-3 w-full">
+                  {categoryData.slice(0, 5).map((cat) => {
+                    const pct = totalSpending > 0 ? Math.round((cat.value / totalSpending) * 100) : 0;
+                    return (
+                      <div key={cat.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-3 h-3 rounded-full" style={{ background: cat.color }} />
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{cat.name}</span>
+                        </div>
+                        <span className="text-sm font-bold font-heading" style={{ color: 'var(--text-primary)' }}>{pct}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Insights */}
+          {insights.length > 0 && (
+            <div className="card p-5 animate-fade-in-up">
+              <div className="flex items-center gap-3 mb-4">
+                <Lightbulb className="w-5 h-5" style={{ color: '#FDCB6E' }} />
+                <h3 className="font-heading font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                  Insights
+                </h3>
+              </div>
+              <div className="space-y-3">
+                {insights.map((ins, i) => (
+                  <p key={i} className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    {ins}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Transactions List */}
+        <div className="flex flex-col gap-6">
+          {/* Search + Type Filters */}
+          <div className="card p-5 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search merchants, categories..."
+                className="input pl-10 text-sm w-full"
+              />
+            </div>
+            <div className="flex gap-2">
+              {(['ALL', 'EXPENSE', 'INCOME'] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTypeFilter(t)}
+                  className={`pill text-sm flex-1 justify-center py-2 ${typeFilter === t ? 'pill-active' : ''}`}
+                >
+                  {t === 'ALL' ? 'All' : t === 'EXPENSE' ? 'Expenses' : 'Income'}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
 
-      {/* AI Insights */}
-      {insights.length > 0 && (
-        <div className="card p-4 animate-fade-in-up">
-          <div className="flex items-center gap-2 mb-3">
-            <Lightbulb className="w-4 h-4" style={{ color: '#FDCB6E' }} />
-            <h3 className="font-heading font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
-              Insights
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {insights.map((ins, i) => (
-              <p key={i} className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                {ins}
-              </p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Search + Type Filters */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search merchants, categories..."
-            className="input pl-10 text-sm"
-          />
-        </div>
-        <div className="flex gap-2">
-          {(['ALL', 'EXPENSE', 'INCOME'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTypeFilter(t)}
-              className={`pill text-xs ${typeFilter === t ? 'pill-active' : ''}`}
-            >
-              {t === 'ALL' ? 'All' : t === 'EXPENSE' ? 'Expenses' : 'Income'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Transactions List */}
-      <div>
-        <h3 className="font-heading font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
-          Transactions ({filtered.length})
-        </h3>
-        {filtered.length > 0 ? (
-          <div className="space-y-2">
-            {visibleTx.map((tx, i) => (
-              <TransactionItem key={tx.id} tx={tx} formatCurrency={formatCurrency} index={i} onDelete={handleDeleteTx} onEdit={handleEditTx} />
-            ))}
-            {!showAllTx && filtered.length > 10 && (
-              <button
-                onClick={() => setShowAllTx(true)}
-                className="w-full py-3 text-xs font-heading font-semibold flex items-center justify-center gap-1 rounded-xl"
-                style={{ color: 'var(--color-finova-primary)', background: 'var(--bg-tertiary)' }}
-              >
-                Show All ({filtered.length}) <ChevronDown className="w-3.5 h-3.5" />
-              </button>
+          {/* Transactions List */}
+          <div className="card p-5 flex-1 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-heading font-semibold text-base" style={{ color: 'var(--text-primary)' }}>
+                Transactions ({filtered.length})
+              </h3>
+            </div>
+            
+            {filtered.length > 0 ? (
+              <div className="space-y-3 flex-1">
+                {visibleTx.map((tx, i) => (
+                  <TransactionItem key={tx.id} tx={tx} formatCurrency={formatCurrency} index={i} onDelete={handleDeleteTx} onEdit={handleEditTx} />
+                ))}
+                {!showAllTx && filtered.length > 10 && (
+                  <button
+                    onClick={() => setShowAllTx(true)}
+                    className="w-full py-4 mt-4 text-sm font-heading font-semibold flex items-center justify-center gap-2 rounded-xl transition-colors hover:opacity-80"
+                    style={{ color: 'var(--color-finova-primary)', background: 'var(--bg-tertiary)' }}
+                  >
+                    Show All ({filtered.length}) <ChevronDown className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col justify-center">
+                <EmptyState type="transactions" />
+              </div>
             )}
           </div>
-        ) : (
-          <EmptyState type="transactions" />
-        )}
+        </div>
       </div>
 
       {editingTx && (
@@ -393,7 +407,7 @@ export default function TrackPage() {
           onCancel={() => setEditingTx(null)}
         />
       )}
-    </section>
+    </div>
   );
 }
 

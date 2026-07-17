@@ -266,6 +266,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (!activeToken || !activeUser) return;
 
+    // 0. Fetch updated User Profile
+    try {
+      const profileRes = await fetch(`${API_URL}/api/users/profile?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setUser(profileData);
+        localStorage.setItem('finova_user', JSON.stringify(profileData));
+      }
+    } catch (err) {
+      console.error('Failed to sync profile:', err);
+    }
+
     try {
       // 1. Fetch Wallets
       const walletsRes = await fetch(`${API_URL}/api/wallets?userId=${activeUser.id}`, {
@@ -281,7 +295,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           currency: w.currency as Currency
         })));
       }
+    } catch (err) { console.error('Failed to sync wallets:', err); }
 
+    try {
       // 2. Fetch Active Budgets & Onboarding Settings
       const budgetRes = await fetch(`${API_URL}/api/budgets/active?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
@@ -290,27 +306,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const budgetData = await budgetRes.json();
         setMonthlyBudget(budgetData.monthlyBudget || 500);
       }
+    } catch (err) { console.error('Failed to sync budgets:', err); }
 
+    try {
       // 3. Fetch Transactions (retrieve for all wallets)
       const txRes = await fetch(`${API_URL}/api/transactions?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
-        });
-        if (txRes.ok) {
-          const txData = await txRes.json();
-          setTransactions(txData.map((t: any) => ({
-            id: t.id,
-            amount: t.amount,
-            currency: t.currency as Currency,
-            convertedAmount: t.convertedAmount,
-            category: t.category,
-            type: t.type as 'INCOME' | 'EXPENSE' | 'TRANSFER',
-            merchant: t.merchant,
-            notes: t.notes,
-            walletId: t.walletId,
-            date: t.date
-          })));
-        }
+      });
+      if (txRes.ok) {
+        const txData = await txRes.json();
+        setTransactions(txData.map((t: any) => ({
+          id: t.id,
+          amount: t.amount,
+          currency: t.currency as Currency,
+          convertedAmount: t.convertedAmount,
+          category: t.category,
+          type: t.type as 'INCOME' | 'EXPENSE' | 'TRANSFER',
+          merchant: t.merchant,
+          notes: t.notes,
+          walletId: t.walletId,
+          date: t.date
+        })));
+      }
+    } catch (err) { console.error('Failed to sync transactions:', err); }
 
+    try {
       // 4. Fetch Gamification Data
       const streaksRes = await fetch(`${API_URL}/api/gamification/streaks?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
@@ -322,21 +342,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setTotalActiveDays(streaksData.totalActiveDays || 0);
         setDailyActivities(streaksData.activities || []);
       }
+    } catch (err) { console.error('Failed to sync streaks:', err); }
 
+    try {
       const trophiesRes = await fetch(`${API_URL}/api/gamification/trophies?userId=${activeUser.id}`, {
         headers: { 'Authorization': `Bearer ${activeToken}` }
       });
       if (trophiesRes.ok) {
         const trophiesData = await trophiesRes.json();
-        setUnlockedBadges(trophiesData || []);
+        if (trophiesData.profile) {
+          setXp(trophiesData.profile.xp || 0);
+          setUnlockedBadges(trophiesData.badges || []);
+        }
       }
-
-      // Sync XP from profile (we'll fetch it by calling a basic endpoint or from user object, 
-      // but for now let's assume it updates via gamification endpoints when activity happens)
-
-    } catch (err) {
-      console.error('Offline / Failed to sync database items:', err);
-    }
+    } catch (err) { console.error('Failed to sync trophies:', err); }
   }, [token, user]);
 
   // Load from local storage for offline support

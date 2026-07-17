@@ -12,6 +12,21 @@ export class FinovaController {
 
   // 1. AUTHENTICATION & ONBOARDING
 
+  @Get('users/profile')
+  async getProfile(@Query('userId') userId: string) {
+    if (!userId) throw new BadRequestException('User ID required');
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      baseCurrency: user.baseCurrency,
+      college: user.college,
+      country: user.country
+    };
+  }
+
   @Post('auth/register')
   async register(@Body() body: any) {
     const { email, password, name, country, college, baseCurrency } = body;
