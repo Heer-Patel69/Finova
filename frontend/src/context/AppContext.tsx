@@ -199,6 +199,8 @@ interface UserProfile {
   id: string;
   name: string;
   baseCurrency: string;
+  college?: string;
+  country?: string;
 }
 
 interface AppContextType {
@@ -214,6 +216,8 @@ interface AppContextType {
   setWallets: React.Dispatch<React.SetStateAction<Wallet[]>>;
   transactions: Transaction[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'convertedAmount'>) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   goals: SavingGoal[];
   setGoals: React.Dispatch<React.SetStateAction<SavingGoal[]>>;
   updateGoalAmount: (id: string, amount: number) => void;
@@ -279,12 +283,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setMonthlyBudget(budgetData.monthlyBudget || 500);
       }
 
-      // 3. Fetch Transactions (retrieve from the first active wallet)
-      const walletsResData = await walletsRes.clone().json();
-      if (walletsResData && walletsResData.length > 0) {
-        const primaryWalletId = walletsResData[0].id;
-        const txRes = await fetch(`${API_URL}/api/transactions?walletId=${primaryWalletId}`, {
-          headers: { 'Authorization': `Bearer ${activeToken}` }
+      // 3. Fetch Transactions (retrieve for all wallets)
+      const txRes = await fetch(`${API_URL}/api/transactions?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
         });
         if (txRes.ok) {
           const txData = await txRes.json();
@@ -301,7 +302,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             date: t.date
           })));
         }
-      }
     } catch (err) {
       console.error('Offline / Failed to sync database items:', err);
     }
@@ -404,6 +404,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const deleteTransaction = async (id: string) => {
+    // Optimistic removal
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    try {
+      const activeToken = token || localStorage.getItem('finova_token');
+      const res = await fetch(`${API_URL}/api/transactions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (res.ok) {
+        await syncData();
+      }
+    } catch {
+      console.warn('Failed to delete transaction (offline).');
+      await syncData();
+    }
+  };
+
+  const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
+    // Optimistic update
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    try {
+      const activeToken = token || localStorage.getItem('finova_token');
+      const res = await fetch(`${API_URL}/api/transactions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${activeToken}`
+        },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        await syncData();
+      }
+    } catch {
+      console.warn('Failed to update transaction (offline).');
+      await syncData();
+    }
+  };
+
   const updateGoalAmount = (id: string, amount: number) => {
     setGoals(prev => prev.map(g => {
       if (g.id === id) {
@@ -459,6 +499,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setWallets,
       transactions,
       addTransaction,
+      deleteTransaction,
+      updateTransaction,
       goals,
       setGoals,
       updateGoalAmount,

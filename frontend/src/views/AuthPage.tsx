@@ -6,7 +6,7 @@ import { Currency } from '../context/AppContext';
 import { API_URL } from '../config';
 
 interface AuthPageProps {
-  onAuthSuccess: (token: string, user: { id: string; name: string; baseCurrency: string }) => void;
+  onAuthSuccess: (token: string, user: { id: string; name: string; baseCurrency: string; college?: string; country?: string }) => void;
 }
 
 type AuthMode = 'login' | 'register' | 'onboard';
@@ -91,7 +91,7 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
       if (!res.ok) throw new Error(data.message || 'Onboarding failed');
 
       // Finish auth flow completely
-      onAuthSuccess(token, { id: userId, name, baseCurrency });
+      onAuthSuccess(token, { id: userId, name, baseCurrency, college, country });
     } catch (err: any) {
       setError(err.message || 'Onboarding error');
     } finally {

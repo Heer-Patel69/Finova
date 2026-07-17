@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sun, Moon, Monitor, ChevronRight, Globe, Wallet, Bell, Shield,
   Palette, Lock, Download, Trash2, HelpCircle, MessageCircle,
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useApp, Language, Currency } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import { API_URL } from '../config';
 
 type ProfileSection = 'main' | 'appearance' | 'language' | 'currency' | 'leaderboard';
 
@@ -134,77 +135,7 @@ export default function ProfilePage() {
   }
 
   if (section === 'leaderboard') {
-    const mockLeaderboard = [
-      { name: 'Heer Patel', college: 'Caucasus University', xp: 340, streak: 5, rank: 1 },
-      { name: 'Ana Gvenetadze', college: 'TSU', xp: 290, streak: 8, rank: 2 },
-      { name: 'David Kim', college: 'FU Berlin', xp: 245, streak: 3, rank: 3 },
-      { name: 'Maria Santos', college: 'Caucasus University', xp: 200, streak: 6, rank: 4 },
-      { name: 'Ahmed Hassan', college: 'TSU', xp: 180, streak: 2, rank: 5 },
-    ];
-    const medals = ['🥇', '🥈', '🥉'];
-
-    return (
-      <section className="space-y-5 pb-4 animate-fade-in">
-        <button onClick={() => setSection('main')} className="btn-ghost text-sm font-heading font-semibold flex items-center gap-1">
-          ← Back
-        </button>
-        <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>Leaderboard</h1>
-
-        <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {['Global', 'College', 'Friends', 'This Week'].map((tab, i) => (
-            <button key={tab} className={`pill text-xs ${i === 0 ? 'pill-active' : ''}`}>{tab}</button>
-          ))}
-        </div>
-
-        {/* Podium */}
-        <div className="flex justify-center items-end gap-3 pt-4 pb-2">
-          {[1, 0, 2].map((idx) => {
-            const user = mockLeaderboard[idx];
-            const heights = [100, 120, 80];
-            return (
-              <div key={idx} className="flex flex-col items-center">
-                <span className="text-2xl mb-1">{medals[idx]}</span>
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center font-heading font-bold text-sm"
-                  style={{ background: 'var(--gradient-primary)', color: 'white' }}
-                >
-                  {user.name[0]}
-                </div>
-                <p className="text-xs font-semibold mt-1 text-center" style={{ color: 'var(--text-primary)' }}>
-                  {user.name.split(' ')[0]}
-                </p>
-                <p className="text-[10px] font-bold" style={{ color: '#6C5CE7' }}>{user.xp} XP</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* List */}
-        <div className="space-y-2">
-          {mockLeaderboard.map((user) => (
-            <div key={user.rank} className="card p-3 flex items-center gap-3">
-              <span className="font-heading font-bold text-sm w-6 text-center" style={{ color: 'var(--text-tertiary)' }}>
-                {user.rank <= 3 ? medals[user.rank - 1] : `#${user.rank}`}
-              </span>
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center font-heading font-bold text-xs flex-shrink-0"
-                style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}
-              >
-                {user.name[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-heading font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
-                <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>{user.college}</p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="font-heading font-bold text-sm" style={{ color: '#6C5CE7' }}>{user.xp}</p>
-                <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>🔥 {user.streak}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
+    return <LeaderboardView setSection={setSection} />;
   }
 
   // Main Profile
@@ -328,6 +259,105 @@ export default function ProfilePage() {
       <p className="text-center text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
         Finova v2.0 · Made for students 🎓
       </p>
+    </section>
+  );
+}
+
+function LeaderboardView({ setSection }: { setSection: (s: ProfileSection) => void }) {
+  const { user, token } = useApp();
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    async function fetchLeaderboard() {
+      try {
+        const res = await fetch(`${API_URL}/api/leaderboard?userId=${user?.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderboard(data);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLeaderboard();
+  }, [user, token]);
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  return (
+    <section className="space-y-5 pb-4 animate-fade-in">
+      <button onClick={() => setSection('main')} className="btn-ghost text-sm font-heading font-semibold flex items-center gap-1">
+        ← Back
+      </button>
+      <h1 className="font-heading font-bold text-xl" style={{ color: 'var(--text-primary)' }}>Leaderboard</h1>
+
+      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+        {['Global', 'College', 'Friends', 'This Week'].map((tab, i) => (
+          <button key={tab} className={`pill text-xs ${i === 0 ? 'pill-active' : ''}`}>{tab}</button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-center text-sm mt-10" style={{ color: 'var(--text-tertiary)' }}>Loading ranking...</p>
+      ) : leaderboard.length > 0 ? (
+        <>
+          {/* Podium */}
+          <div className="flex justify-center items-end gap-3 pt-4 pb-2">
+            {[1, 0, 2].map((idx) => {
+              const u = leaderboard[idx];
+              if (!u) return null;
+              return (
+                <div key={idx} className="flex flex-col items-center">
+                  <span className="text-2xl mb-1">{medals[idx]}</span>
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center font-heading font-bold text-sm"
+                    style={{ background: 'var(--gradient-primary)', color: 'white' }}
+                  >
+                    {u.name[0]}
+                  </div>
+                  <p className="text-xs font-semibold mt-1 text-center" style={{ color: 'var(--text-primary)' }}>
+                    {u.name.split(' ')[0]}
+                  </p>
+                  <p className="text-[10px] font-bold" style={{ color: '#6C5CE7' }}>{u.xp} XP</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* List */}
+          <div className="space-y-2">
+            {leaderboard.map((u) => (
+              <div key={u.rank} className="card p-3 flex items-center gap-3">
+                <span className="font-heading font-bold text-sm w-6 text-center" style={{ color: 'var(--text-tertiary)' }}>
+                  {u.rank <= 3 ? medals[u.rank - 1] : `#${u.rank}`}
+                </span>
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center font-heading font-bold text-xs flex-shrink-0"
+                  style={{ background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}
+                >
+                  {u.name[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-heading font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>{u.name}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--text-tertiary)' }}>{u.college}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="font-heading font-bold text-sm" style={{ color: '#6C5CE7' }}>{u.xp}</p>
+                  <p className="text-[10px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>🔥 {u.streak}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      ) : (
+        <p className="text-center text-sm mt-10" style={{ color: 'var(--text-tertiary)' }}>No users found.</p>
+      )}
     </section>
   );
 }

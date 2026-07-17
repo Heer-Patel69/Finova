@@ -28,12 +28,43 @@ const filterLabels: Record<DateFilter, string> = {
 };
 
 export default function TrackPage() {
-  const { transactions, formatCurrency, monthlyBudget, user, token } = useApp();
+  const { transactions, formatCurrency, monthlyBudget, user, token, deleteTransaction, updateTransaction, syncData } = useApp();
   const { resolvedTheme } = useTheme();
   const [dateFilter, setDateFilter] = useState<DateFilter>('month');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'EXPENSE' | 'INCOME'>('ALL');
   const [showAllTx, setShowAllTx] = useState(false);
+  const [editingTx, setEditingTx] = useState<any>(null);
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editMerchant, setEditMerchant] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+
+  const handleDeleteTx = async (id: string) => {
+    if (window.confirm('Delete this transaction? This will also revert your wallet balance.')) {
+      await deleteTransaction(id);
+    }
+  };
+
+  const handleEditTx = (tx: any) => {
+    setEditingTx(tx);
+    setEditAmount(String(tx.amount));
+    setEditCategory(tx.category);
+    setEditMerchant(tx.merchant || '');
+    setEditNotes(tx.notes || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTx) return;
+    await updateTransaction(editingTx.id, {
+      amount: parseFloat(editAmount),
+      category: editCategory,
+      merchant: editMerchant,
+      notes: editNotes,
+      type: editingTx.type,
+    });
+    setEditingTx(null);
+  };
 
   const handleExport = (format: 'csv' | 'pdf') => {
     if (!user) return;
@@ -330,7 +361,7 @@ export default function TrackPage() {
         {filtered.length > 0 ? (
           <div className="space-y-2">
             {visibleTx.map((tx, i) => (
-              <TransactionItem key={tx.id} tx={tx} formatCurrency={formatCurrency} index={i} />
+              <TransactionItem key={tx.id} tx={tx} formatCurrency={formatCurrency} index={i} onDelete={handleDeleteTx} onEdit={handleEditTx} />
             ))}
             {!showAllTx && filtered.length > 10 && (
               <button
@@ -346,6 +377,52 @@ export default function TrackPage() {
           <EmptyState type="transactions" />
         )}
       </div>
+
+      {editingTx && (
+        <EditTransactionModal
+          tx={editingTx}
+          editAmount={editAmount}
+          setEditAmount={setEditAmount}
+          editCategory={editCategory}
+          setEditCategory={setEditCategory}
+          editMerchant={editMerchant}
+          setEditMerchant={setEditMerchant}
+          editNotes={editNotes}
+          setEditNotes={setEditNotes}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingTx(null)}
+        />
+      )}
     </section>
+  );
+}
+
+function EditTransactionModal({ tx, editAmount, setEditAmount, editCategory, setEditCategory, editMerchant, setEditMerchant, editNotes, setEditNotes, onSave, onCancel }: any) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+      <div className="card p-5 w-[90%] max-w-sm space-y-4 animate-fade-in" style={{ background: 'var(--bg-secondary)' }}>
+        <h3 className="font-heading font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Edit Transaction</h3>
+        <div>
+          <label className="text-xs font-semibold" style={{ color: 'var(--text-tertiary)' }}>Amount</label>
+          <input type="number" value={editAmount} onChange={(e) => setEditAmount(e.target.value)} className="input text-sm w-full" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold" style={{ color: 'var(--text-tertiary)' }}>Category</label>
+          <input type="text" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="input text-sm w-full" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold" style={{ color: 'var(--text-tertiary)' }}>Merchant</label>
+          <input type="text" value={editMerchant} onChange={(e) => setEditMerchant(e.target.value)} className="input text-sm w-full" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold" style={{ color: 'var(--text-tertiary)' }}>Notes</label>
+          <input type="text" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="input text-sm w-full" />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="btn-ghost flex-1 py-2 text-sm rounded-xl">Cancel</button>
+          <button onClick={onSave} className="btn-primary flex-1 py-2 text-sm rounded-xl">Save</button>
+        </div>
+      </div>
+    </div>
   );
 }

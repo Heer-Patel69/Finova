@@ -6,10 +6,11 @@ import {
   BarChart3,
   Plus,
   Sparkles,
-  User
+  User,
+  Users
 } from 'lucide-react';
 
-type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile';
+type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile' | 'split';
 
 interface BottomNavProps {
   activeTab: Tab;
@@ -20,6 +21,7 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'track', label: 'Track', icon: BarChart3 },
   { id: 'add', label: 'Add', icon: Plus },
+  { id: 'split', label: 'Split', icon: Users },
   { id: 'coach', label: 'Coach', icon: Sparkles },
   { id: 'profile', label: 'Profile', icon: User },
 ];

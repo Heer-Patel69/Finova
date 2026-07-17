@@ -54,25 +54,29 @@ export default function CoachPage() {
         },
         body: JSON.stringify({ userId: user?.id, message: userMsg }),
       });
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
       const data = await response.json();
-      setChatMessages((prev) => [...prev, { sender: 'ai', text: data.answer || data.message || 'I had trouble processing that.' }]);
+      const aiText = data.answer || data.message || 'I had trouble processing that. Try asking in a different way!';
+      setChatMessages((prev) => [...prev, { sender: 'ai', text: aiText }]);
     } catch {
-      // Offline fallback
-      setTimeout(() => {
-        let reply = '';
-        if (userMsg.toLowerCase().includes('buy') || userMsg.toLowerCase().includes('afford')) {
-          const costStr = userMsg.match(/\d+/);
-          const cost = costStr ? parseInt(costStr[0]) : 30;
-          reply = cost > dailySafeSpend * 1.5
-            ? `That ${formatCurrency(cost)} purchase exceeds your safe limit of ${formatCurrency(dailySafeSpend)}. I'd suggest waiting or splitting the cost.`
-            : `Yes! That fits within your daily allowance of ${formatCurrency(dailySafeSpend)}. Go for it and log it right after!`;
-        } else if (userMsg.toLowerCase().includes('save')) {
-          reply = `Great question! Try capping coffee at ${formatCurrency(15)}/week. That alone saves ${formatCurrency(30)}/month. Small changes compound fast.`;
-        } else {
-          reply = `Based on your data: you've spent ${formatCurrency(totalSpent)} this month with ${formatCurrency(remainingBudget)} remaining. You're on a ${streak}-day streak — keep it up!`;
-        }
-        setChatMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
-      }, 600);
+      // Offline / API error fallback — generate a useful local response
+      let reply = '';
+      if (userMsg.toLowerCase().includes('buy') || userMsg.toLowerCase().includes('afford')) {
+        const costStr = userMsg.match(/\d+/);
+        const cost = costStr ? parseInt(costStr[0]) : 30;
+        reply = cost > dailySafeSpend * 1.5
+          ? `That ${formatCurrency(cost)} purchase exceeds your safe limit of ${formatCurrency(dailySafeSpend)}. I'd suggest waiting or splitting the cost.`
+          : `Yes! That fits within your daily allowance of ${formatCurrency(dailySafeSpend)}. Go for it and log it right after!`;
+      } else if (userMsg.toLowerCase().includes('save')) {
+        reply = `Great question! Try capping coffee at ${formatCurrency(15)}/week. That alone saves ${formatCurrency(30)}/month. Small changes compound fast.`;
+      } else if (userMsg.toLowerCase().includes('budget')) {
+        reply = `Your monthly budget is ${formatCurrency(monthlyBudget)}. You've spent ${formatCurrency(totalSpent)} so far with ${formatCurrency(remainingBudget)} remaining across ${daysRemaining} days.`;
+      } else {
+        reply = `Based on your data: you've spent ${formatCurrency(totalSpent)} this month with ${formatCurrency(remainingBudget)} remaining. Your daily safe spend is ${formatCurrency(dailySafeSpend)}. You're on a ${streak}-day streak — keep it up!`;
+      }
+      setChatMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
     }
   };
 

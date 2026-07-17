@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Res, BadRequestException, Delete, Put } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -45,7 +45,7 @@ export class FinovaController {
       });
 
       const token = this.jwtService.sign({ userId: user.id, email: user.email });
-      return { message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name } };
+      return { message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name, college: user.college, country: user.country, baseCurrency: user.baseCurrency } };
     } catch (error: any) {
       console.error('Register error:', error);
       if (error.status) throw error; // Re-throw NestJS exceptions
@@ -67,7 +67,7 @@ export class FinovaController {
     }
 
     const token = this.jwtService.sign({ userId: user.id, email: user.email });
-    return { token, user: { id: user.id, name: user.name, baseCurrency: user.baseCurrency } };
+    return { token, user: { id: user.id, name: user.name, baseCurrency: user.baseCurrency, college: user.college, country: user.country } };
   }
 
   @Patch('auth/onboard')
@@ -177,11 +177,61 @@ export class FinovaController {
   }
 
   @Get('transactions')
-  async getTransactions(@Query('walletId') walletId: string) {
-    if (!walletId) throw new BadRequestException('Wallet ID required');
+  async getTransactions(@Query('userId') userId: string) {
+    if (!userId) throw new BadRequestException('User ID required');
+    const wallets = await this.prisma.wallet.findMany({ where: { userId } });
+    const walletIds = wallets.map(w => w.id);
     return this.prisma.transaction.findMany({
-      where: { walletId },
+      where: { walletId: { in: walletIds } },
       orderBy: { date: 'desc' }
+    });
+  }
+
+  @Delete('transactions/:id')
+  async deleteTransaction(@Param('id') id: string) {
+    const tx = await this.prisma.transaction.findUnique({ where: { id } });
+    if (!tx) throw new BadRequestException('Transaction not found');
+
+    const wallet = await this.prisma.wallet.findUnique({ where: { id: tx.walletId } });
+    if (wallet) {
+      // Revert wallet balance
+      const balanceDiff = tx.type === 'INCOME' ? -tx.amount : tx.amount;
+      await this.prisma.wallet.update({
+        where: { id: tx.walletId },
+        data: { balance: wallet.balance + balanceDiff }
+      });
+    }
+
+    return this.prisma.transaction.delete({ where: { id } });
+  }
+
+  @Put('transactions/:id')
+  async updateTransaction(@Param('id') id: string, @Body() body: any) {
+    const { amount, date, notes, merchant, category, type } = body;
+    const tx = await this.prisma.transaction.findUnique({ where: { id } });
+    if (!tx) throw new BadRequestException('Transaction not found');
+
+    // Revert old amount
+    const wallet = await this.prisma.wallet.findUnique({ where: { id: tx.walletId } });
+    if (wallet) {
+      const oldDiff = tx.type === 'INCOME' ? -tx.amount : tx.amount;
+      const newDiff = type === 'INCOME' ? amount : -amount;
+      await this.prisma.wallet.update({
+        where: { id: tx.walletId },
+        data: { balance: wallet.balance + oldDiff + newDiff }
+      });
+    }
+
+    return this.prisma.transaction.update({
+      where: { id },
+      data: {
+        amount,
+        type,
+        category,
+        merchant,
+        notes,
+        date: date ? new Date(date) : undefined
+      }
     });
   }
 

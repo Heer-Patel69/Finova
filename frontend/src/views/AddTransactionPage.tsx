@@ -25,6 +25,7 @@ export default function AddTransactionPage({ onClose }: AddTransactionPageProps)
   const [notes, setNotes] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [tags, setTags] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   const categories = txType === 'EXPENSE' ? expenseCategories : incomeCategories;
 
@@ -40,7 +41,7 @@ export default function AddTransactionPage({ onClose }: AddTransactionPageProps)
       walletId,
       merchant: merchant || undefined,
       notes: notes || undefined,
-      date: new Date().toISOString(),
+      date: new Date(date).toISOString(),
     });
 
     onClose();
@@ -227,6 +228,20 @@ export default function AddTransactionPage({ onClose }: AddTransactionPageProps)
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. Lunch with friends"
+              className="input text-sm"
+            />
+          </div>
+
+          {/* Date */}
+          <div>
+            <label className="block text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
+              Date
+            </label>
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               className="input text-sm"
             />
           </div>

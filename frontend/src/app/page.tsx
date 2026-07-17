@@ -10,8 +10,9 @@ import AddTransactionPage from '../views/AddTransactionPage';
 import CoachPage from '../views/CoachPage';
 import ProfilePage from '../views/ProfilePage';
 import AuthPage from '../views/AuthPage';
+import SplitPage from '../views/SplitPage';
 
-type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile';
+type Tab = 'home' | 'track' | 'add' | 'coach' | 'profile' | 'split';
 
 export default function AppHome() {
   const { xp, streak, token, login } = useApp();
@@ -41,6 +42,7 @@ export default function AppHome() {
         {activeTab === 'home' && <HomePage />}
         {activeTab === 'track' && <TrackPage />}
         {activeTab === 'coach' && <CoachPage />}
+        {activeTab === 'split' && <SplitPage />}
         {activeTab === 'profile' && <ProfilePage />}
       </main>
 
