@@ -312,7 +312,7 @@ function LeaderboardView({ setSection }: { setSection: (s: ProfileSection) => vo
       }
     }
     fetchLeaderboard();
-  }, [user, token]);
+  }, [user?.id, token]);
 
   const medals = ['🥇', '🥈', '🥉'];
 

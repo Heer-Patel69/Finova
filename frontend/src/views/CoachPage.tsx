@@ -57,7 +57,7 @@ export default function CoachPage() {
       .finally(() => {
         setLoadingHistory(false);
       });
-  }, [user, token]);
+  }, [user?.id, token]);
 
   const handleClearChat = async () => {
     if (!user || !token) return;

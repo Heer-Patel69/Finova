@@ -35,7 +35,7 @@ export default function HomePage() {
         }
       })
       .catch((err) => console.error('Offline / failed to fetch AI morning brief:', err));
-  }, [user, token]);
+  }, [user?.id, token]);
 
   const rates: Record<string, number> = {
     USD: 1.0, GEL: 2.70, INR: 83.50, EUR: 0.92, GBP: 0.78,

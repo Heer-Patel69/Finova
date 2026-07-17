@@ -273,8 +273,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       });
       if (profileRes.ok) {
         const profileData = await profileRes.json();
-        setUser(profileData);
-        localStorage.setItem('finova_user', JSON.stringify(profileData));
+        if (
+          !user ||
+          user.name !== profileData.name ||
+          user.baseCurrency !== profileData.baseCurrency ||
+          user.college !== profileData.college ||
+          user.country !== profileData.country
+        ) {
+          setUser(profileData);
+          localStorage.setItem('finova_user', JSON.stringify(profileData));
+        }
       }
     } catch (err) {
       console.error('Failed to sync profile:', err);
