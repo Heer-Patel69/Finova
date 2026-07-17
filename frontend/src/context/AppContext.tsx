@@ -231,7 +231,11 @@ interface AppContextType {
   xp: number;
   setXp: React.Dispatch<React.SetStateAction<number>>;
   streak: number;
+  highestStreak: number;
+  totalActiveDays: number;
   setStreak: React.Dispatch<React.SetStateAction<number>>;
+  dailyActivities: { date: string; completed: boolean; xpEarned: number }[];
+  unlockedBadges: { badgeId: string; unlockedAt: string }[];
   syncData: () => Promise<void>;
 }
 
@@ -243,8 +247,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
   const [currency, setCurrency] = useState<Currency>('GEL');
   const [monthlyBudget, setMonthlyBudget] = useState<number>(500);
-  const [xp, setXp] = useState<number>(340);
-  const [streak, setStreak] = useState<number>(5);
+  const [xp, setXp] = useState<number>(0);
+  const [streak, setStreak] = useState<number>(0);
+  const [highestStreak, setHighestStreak] = useState<number>(0);
+  const [totalActiveDays, setTotalActiveDays] = useState<number>(0);
+  const [dailyActivities, setDailyActivities] = useState<{ date: string; completed: boolean; xpEarned: number }[]>([]);
+  const [unlockedBadges, setUnlockedBadges] = useState<{ badgeId: string; unlockedAt: string }[]>([]);
 
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -302,6 +310,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             date: t.date
           })));
         }
+
+      // 4. Fetch Gamification Data
+      const streaksRes = await fetch(`${API_URL}/api/gamification/streaks?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (streaksRes.ok) {
+        const streaksData = await streaksRes.json();
+        setStreak(streaksData.currentStreak || 0);
+        setHighestStreak(streaksData.highestStreak || 0);
+        setTotalActiveDays(streaksData.totalActiveDays || 0);
+        setDailyActivities(streaksData.activities || []);
+      }
+
+      const trophiesRes = await fetch(`${API_URL}/api/gamification/trophies?userId=${activeUser.id}`, {
+        headers: { 'Authorization': `Bearer ${activeToken}` }
+      });
+      if (trophiesRes.ok) {
+        const trophiesData = await trophiesRes.json();
+        setUnlockedBadges(trophiesData || []);
+      }
+
+      // Sync XP from profile (we'll fetch it by calling a basic endpoint or from user object, 
+      // but for now let's assume it updates via gamification endpoints when activity happens)
+
     } catch (err) {
       console.error('Offline / Failed to sync database items:', err);
     }
@@ -382,7 +414,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         // Sync complete database states
         await syncData();
-        setXp(x => x + 15);
+
+        // Log daily activity for adding a transaction (e.g. 15 XP)
+        try {
+          const activityRes = await fetch(`${API_URL}/api/gamification/activity`, {
+             method: 'POST',
+             headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${activeToken}`
+             },
+             body: JSON.stringify({ userId: user?.id, xp: 15 })
+          });
+          if (activityRes.ok) {
+             const activityData = await activityRes.json();
+             setXp(activityData.newXp);
+             setStreak(activityData.newCurrentStreak);
+             await syncData(); // re-fetch activities to update calendar
+          }
+        } catch (e) {
+          console.warn('Failed to log daily activity', e);
+        }
       }
     } catch {
       console.warn('Saved transaction locally (offline).');
@@ -514,7 +565,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       xp,
       setXp,
       streak,
+      highestStreak,
+      totalActiveDays,
       setStreak,
+      dailyActivities,
+      unlockedBadges,
       syncData
     }}>
       {children}

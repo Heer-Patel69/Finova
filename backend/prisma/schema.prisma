@@ -24,9 +24,11 @@ model User {
   goals          Goal[]
   profile        Profile?
   splitsPaid     SplitExpense[]     @relation("PaidBy")
-  memberships    SplitGroupMember[]
-  challenges     UserChallenge[]
-  wallets        Wallet[]
+  memberships      SplitGroupMember[]
+  challenges       UserChallenge[]
+  wallets          Wallet[]
+  dailyActivities  DailyActivity[]
+  userBadges       UserBadge[]
 }
 
 model Profile {
@@ -253,4 +255,26 @@ enum ChallengeStatus {
 enum SettlementStatus {
   PENDING
   SETTLED
+}
+
+model DailyActivity {
+  id          String   @id @default(uuid())
+  userId      String
+  date        DateTime
+  completed   Boolean  @default(true)
+  xpEarned    Int      @default(0)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  userId     String
+  badgeId    String
+  unlockedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
 }

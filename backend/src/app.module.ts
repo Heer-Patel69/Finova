@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { FinovaController } from './finova.controller';
 import { AiCoachController } from './ai-coach.controller';
+import { GamificationController } from './gamification.controller';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { AiCoachController } from './ai-coach.controller';
       signOptions: { expiresIn: '60d' },
     }),
   ],
-  controllers: [AppController, FinovaController, AiCoachController],
+  controllers: [AppController, FinovaController, AiCoachController, GamificationController],
   providers: [AppService, PrismaService],
 })
 export class AppModule {}

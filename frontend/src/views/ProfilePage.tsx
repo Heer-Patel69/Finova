@@ -4,13 +4,15 @@ import React, { useState, useEffect } from 'react';
 import {
   Sun, Moon, Monitor, ChevronRight, Globe, Wallet, Bell, Shield,
   Palette, Lock, Download, Trash2, HelpCircle, MessageCircle,
-  Star, LogOut, User, GraduationCap, Languages, Banknote, Trophy
+  Star, LogOut, User, GraduationCap, Languages, Banknote, Trophy, Flame
 } from 'lucide-react';
 import { useApp, Language, Currency } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { API_URL } from '../config';
+import StreaksPage from './StreaksPage';
+import TrophiesPage from './TrophiesPage';
 
-type ProfileSection = 'main' | 'appearance' | 'language' | 'currency' | 'leaderboard';
+type ProfileSection = 'main' | 'appearance' | 'language' | 'currency' | 'leaderboard' | 'streaks' | 'trophies';
 
 export default function ProfilePage() {
   const { language, setLanguage, currency, setCurrency, monthlyBudget, setMonthlyBudget, xp, streak, logout, user } = useApp();
@@ -138,12 +140,21 @@ export default function ProfilePage() {
     return <LeaderboardView setSection={setSection} />;
   }
 
+  if (section === 'streaks') {
+    return <StreaksPage onBack={() => setSection('main')} />;
+  }
+
+  if (section === 'trophies') {
+    return <TrophiesPage onBack={() => setSection('main')} />;
+  }
+
   // Main Profile
   const menuItems = [
+    { icon: Trophy, label: 'Trophies & Achievements', desc: 'Badges and unlocks', section: 'trophies' as ProfileSection },
+    { icon: Trophy, label: 'Leaderboard', desc: `Rank #1`, section: 'leaderboard' as ProfileSection },
     { icon: Palette, label: 'Appearance', desc: resolvedTheme === 'dark' ? 'Dark Mode' : 'Light Mode', section: 'appearance' as ProfileSection },
     { icon: Languages, label: 'Language', desc: language.toUpperCase(), section: 'language' as ProfileSection },
     { icon: Banknote, label: 'Currency', desc: currency, section: 'currency' as ProfileSection },
-    { icon: Trophy, label: 'Leaderboard', desc: `Rank #1`, section: 'leaderboard' as ProfileSection },
   ];
 
   return (
@@ -167,10 +178,15 @@ export default function ProfilePage() {
             <p className="text-white font-heading font-bold">Lv.{level}</p>
             <p className="text-white/50 text-[10px]">Level</p>
           </div>
-          <div>
-            <p className="text-white font-heading font-bold">{streak}</p>
+          <button 
+            onClick={() => setSection('streaks')}
+            className="hover:scale-105 transition-transform"
+          >
+            <p className="text-white font-heading font-bold flex items-center gap-1 justify-center">
+                {streak} <Flame size={12} className="text-orange-500" />
+            </p>
             <p className="text-white/50 text-[10px]">Streak</p>
-          </div>
+          </button>
         </div>
         <div className="mt-3">
           <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }}>
