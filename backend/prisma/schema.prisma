@@ -1,12 +1,220 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id             String             @id @default(uuid())
+  email          String             @unique
+  passwordHash   String
+  name           String
+  country        String
+  college        String
+  baseCurrency   String             @default("USD")
+  monthlyBudget  Float?
+  currentBalance Float              @default(0.0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  conversations  AIConversation[]
+  bills          Bill[]
+  budgets        Budget[]
+  goals          Goal[]
+  profile        Profile?
+  splitsPaid     SplitExpense[]     @relation("PaidBy")
+  memberships    SplitGroupMember[]
+  challenges     UserChallenge[]
+  wallets        Wallet[]
+}
+
+model Profile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  xp             Int       @default(0)
+  currentStreak  Int       @default(0)
+  highestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+  badges         String[]
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  type         WalletType    @default(CASH)
+  balance      Float         @default(0.0)
+  currency     String        @default("USD")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Transaction {
+  id               String          @id @default(uuid())
+  walletId         String
+  amount           Float
+  currency         String
+  convertedAmount  Float
+  exchangeRate     Float
+  exchangeDate     DateTime        @default(now())
+  category         String
+  type             TransactionType
+  notes            String?
+  merchant         String?
+  attachmentUrl    String?
+  date             DateTime        @default(now())
+  transferWalletId String?
+  createdAt        DateTime        @default(now())
+  wallet           Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([date])
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String
+  amount    Float
+  currency  String
+  category  String
+  isWeekly  Boolean  @default(false)
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Goal {
+  id                  String     @id @default(uuid())
+  userId              String
+  name                String
+  targetAmount        Float
+  currentSaved        Float      @default(0.0)
+  targetDate          DateTime
+  health              GoalHealth @default(ON_TRACK)
+  estimatedCompletion DateTime?
+  monthlyRequired     Float      @default(0.0)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Bill {
+  id         String         @id @default(uuid())
+  userId     String
+  name       String
+  amount     Float
+  currency   String
+  dueDate    DateTime
+  isPaid     Boolean        @default(false)
+  recurrence BillRecurrence @default(MONTHLY)
+  category   String
+  createdAt  DateTime       @default(now())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Challenge {
+  id          String          @id @default(uuid())
+  name        String
+  description String
+  xpReward    Int             @default(50)
+  isWeekly    Boolean         @default(false)
+  users       UserChallenge[]
+}
+
+model UserChallenge {
+  id          String          @id @default(uuid())
+  userId      String
+  challengeId String
+  status      ChallengeStatus @default(IN_PROGRESS)
+  progress    Float           @default(0.0)
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  challenge   Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+}
+
+model SplitGroup {
+  id          String             @id @default(uuid())
+  name        String
+  createdAt   DateTime           @default(now())
+  settlements Settlement[]
+  expenses    SplitExpense[]
+  members     SplitGroupMember[]
+}
+
+model SplitGroupMember {
+  id       String     @id @default(uuid())
+  groupId  String
+  userId   String
+  joinedAt DateTime   @default(now())
+  group    SplitGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+}
+
+model SplitExpense {
+  id          String              @id @default(uuid())
+  groupId     String
+  description String
+  amount      Float
+  currency    String
+  paidById    String
+  date        DateTime            @default(now())
+  group       SplitGroup          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  paidBy      User                @relation("PaidBy", fields: [paidById], references: [id])
+  shares      SplitExpenseShare[]
+
+  @@index([groupId])
+}
+
+model SplitExpenseShare {
+  id             String       @id @default(uuid())
+  splitExpenseId String
+  userId         String
+  amount         Float
+  percentage     Float
+  expense        SplitExpense @relation(fields: [splitExpenseId], references: [id], onDelete: Cascade)
+}
+
+model Settlement {
+  id       String           @id @default(uuid())
+  groupId  String
+  payerId  String
+  payeeId  String
+  amount   Float
+  currency String
+  status   SettlementStatus @default(PENDING)
+  date     DateTime         @default(now())
+  group    SplitGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+}
+
+model AIConversation {
+  id        String   @id @default(uuid())
+  userId    String
+  prompt    String
+  response  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum WalletType {
@@ -45,242 +253,4 @@ enum ChallengeStatus {
 enum SettlementStatus {
   PENDING
   SETTLED
-}
-
-model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
-  passwordHash   String
-  name           String
-  country        String
-  college        String
-  baseCurrency   String         @default("USD")
-  monthlyBudget  Float?         // Optional monthly budget cap
-  currentBalance Float          @default(0.0)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  
-  profile        Profile?
-  wallets        Wallet[]
-  budgets        Budget[]
-  goals          Goal[]
-  bills          Bill[]
-  challenges     UserChallenge[]
-  memberships    SplitGroupMember[]
-  conversations  AIConversation[]
-  splitsPaid     SplitExpense[] @relation("PaidBy")
-}
-
-model Profile {
-  id             String         @id @default(uuid())
-  userId         String         @unique
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  xp             Int            @default(0)
-  currentStreak  Int            @default(0)
-  highestStreak  Int            @default(0)
-  lastActiveDate DateTime?      // Tracks streaks
-  badges         String[]       // Array of unlocked badge IDs
-}
-
-model Wallet {
-  id             String         @id @default(uuid())
-  userId         String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  name           String
-  type           WalletType     @default(CASH)
-  balance        Float          @default(0.0)
-  currency       String         @default("USD")
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  
-  transactions   Transaction[]
-  
-  @@index([userId])
-}
-
-model Transaction {
-  id               String          @id @default(uuid())
-  walletId         String
-  wallet           Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  
-  amount           Float           // Original amount entered
-  currency         String          // Original currency code (e.g. GEL, EUR)
-  convertedAmount  Float           // Converted amount in Base Currency
-  exchangeRate     Float           // Rate on conversion date
-  exchangeDate     DateTime        @default(now())
-  
-  category         String          // Transaction category (e.g. Food, Salary)
-  type             TransactionType
-  notes            String?
-  merchant         String?
-  attachmentUrl    String?         // Receipt image/PDF link
-  date             DateTime        @default(now())
-  
-  // Destination wallet ID if transaction is a TRANSFER
-  transferWalletId String?         
-  
-  createdAt        DateTime        @default(now())
-  
-  @@index([walletId])
-  @@index([date])
-}
-
-model Budget {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  amount     Float
-  currency   String
-  category   String   // "ALL" for overall monthly budget, or specific category
-  isWeekly   Boolean  @default(false)
-  startDate  DateTime
-  endDate    DateTime
-  
-  createdAt  DateTime @default(now())
-  
-  @@index([userId])
-}
-
-model Goal {
-  id                  String     @id @default(uuid())
-  userId              String
-  user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  name                String
-  targetAmount        Float
-  currentSaved        Float      @default(0.0)
-  targetDate          DateTime
-  health              GoalHealth @default(ON_TRACK)
-  
-  // Calculated properties saved from AI routine
-  estimatedCompletion DateTime?
-  monthlyRequired     Float      @default(0.0)
-  
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
-  
-  @@index([userId])
-}
-
-model Bill {
-  id         String         @id @default(uuid())
-  userId     String
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  name       String
-  amount     Float
-  currency   String
-  dueDate    DateTime
-  isPaid     Boolean        @default(false)
-  recurrence BillRecurrence @default(MONTHLY)
-  category   String
-  
-  createdAt  DateTime       @default(now())
-  
-  @@index([userId])
-}
-
-model Challenge {
-  id          String          @id @default(uuid())
-  name        String
-  description String
-  xpReward    Int             @default(50)
-  isWeekly    Boolean         @default(false)
-  
-  users       UserChallenge[]
-}
-
-model UserChallenge {
-  id          String          @id @default(uuid())
-  userId      String
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  challengeId String
-  challenge   Challenge       @relation(fields: [challengeId], references: [id], onDelete: Cascade)
-  
-  status      ChallengeStatus @default(IN_PROGRESS)
-  progress    Float           @default(0.0) // percentage complete (0.0 to 1.0)
-  completedAt DateTime?
-  
-  createdAt   DateTime        @default(now())
-  
-  @@unique([userId, challengeId])
-}
-
-model SplitGroup {
-  id        String             @id @default(uuid())
-  name      String
-  createdAt DateTime           @default(now())
-  
-  members   SplitGroupMember[]
-  expenses  SplitExpense[]
-  settlements Settlement[]
-}
-
-model SplitGroupMember {
-  id           String     @id @default(uuid())
-  groupId      String
-  group        SplitGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  joinedAt     DateTime   @default(now())
-  
-  @@unique([groupId, userId])
-}
-
-model SplitExpense {
-  id          String              @id @default(uuid())
-  groupId     String
-  group       SplitGroup          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  
-  description String
-  amount      Float
-  currency    String
-  paidById    String
-  paidBy      User                @relation("PaidBy", fields: [paidById], references: [id])
-  date        DateTime            @default(now())
-  
-  shares      SplitExpenseShare[]
-  
-  @@index([groupId])
-}
-
-model SplitExpenseShare {
-  id             String       @id @default(uuid())
-  splitExpenseId String
-  expense        SplitExpense @relation(fields: [splitExpenseId], references: [id], onDelete: Cascade)
-  
-  userId         String
-  amount         Float        // Member's share in original currency
-  percentage     Float        // Share percentage
-}
-
-model Settlement {
-  id        String           @id @default(uuid())
-  groupId   String
-  group     SplitGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  
-  payerId   String           // User who owes
-  payeeId   String           // User owed to
-  amount    Float
-  currency  String
-  status    SettlementStatus @default(PENDING)
-  date      DateTime         @default(now())
-  
-  @@index([groupId])
-}
-
-model AIConversation {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  prompt    String
-  response  String
-  createdAt DateTime @default(now())
-  
-  @@index([userId])
 }
