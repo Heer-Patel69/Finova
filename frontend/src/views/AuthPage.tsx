@@ -23,9 +23,9 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
   // Onboarding states
   const [userId, setUserId] = useState('');
   const [monthlyBudget, setMonthlyBudget] = useState('500');
-  const [initialBalance, setInitialBalance] = useState('100');
-  const [walletName, setWalletName] = useState('Cash');
-  const [walletType, setWalletType] = useState('CASH');
+  const [cashBalance, setCashBalance] = useState('0');
+  const [bankBalance, setBankBalance] = useState('0');
+  const [cardBalance, setCardBalance] = useState('0');
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,9 +82,9 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
         body: JSON.stringify({
           userId,
           monthlyBudget: parseFloat(monthlyBudget) || 500,
-          initialBalance: parseFloat(initialBalance) || 0,
-          initialWalletName: walletName || 'Cash',
-          initialWalletType: walletType || 'CASH',
+          cashBalance: parseFloat(cashBalance) || 0,
+          bankBalance: parseFloat(bankBalance) || 0,
+          cardBalance: parseFloat(cardBalance) || 0,
         }),
       });
       const data = await res.json();
@@ -254,41 +254,36 @@ export default function AuthPage({ onAuthSuccess }: AuthPageProps) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Starting Balance</label>
-              <input
-                type="number"
-                required
-                value={initialBalance}
-                onChange={(e) => setInitialBalance(e.target.value)}
-                placeholder="100.00"
-                className="input text-sm font-bold"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Wallet Name</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Cash in Hand</label>
                 <input
-                  type="text"
-                  required
-                  value={walletName}
-                  onChange={(e) => setWalletName(e.target.value)}
-                  placeholder="Cash"
-                  className="input text-sm"
+                  type="number"
+                  value={cashBalance}
+                  onChange={(e) => setCashBalance(e.target.value)}
+                  placeholder="0.00"
+                  className="input text-sm font-bold"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Wallet Type</label>
-                <select
-                  value={walletType}
-                  onChange={(e) => setWalletType(e.target.value)}
-                  className="input text-sm font-semibold"
-                >
-                  <option value="CASH">Cash</option>
-                  <option value="BANK_ACCOUNT">Bank Account</option>
-                  <option value="CREDIT_CARD">Credit Card</option>
-                </select>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Bank Acc</label>
+                <input
+                  type="number"
+                  value={bankBalance}
+                  onChange={(e) => setBankBalance(e.target.value)}
+                  placeholder="0.00"
+                  className="input text-sm font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Cards</label>
+                <input
+                  type="number"
+                  value={cardBalance}
+                  onChange={(e) => setCardBalance(e.target.value)}
+                  placeholder="0.00"
+                  className="input text-sm font-bold"
+                />
               </div>
             </div>
 

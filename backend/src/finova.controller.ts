@@ -72,20 +72,29 @@ export class FinovaController {
 
   @Patch('auth/onboard')
   async onboard(@Body() body: any) {
-    const { userId, monthlyBudget, initialBalance, initialWalletName, initialWalletType } = body;
+    const { userId, monthlyBudget, cashBalance, bankBalance, cardBalance } = body;
     if (!userId) throw new BadRequestException('User ID is required');
+
+    const walletsToCreate = [];
+    if (cashBalance > 0 || (bankBalance === 0 && cardBalance === 0)) {
+      walletsToCreate.push({ name: 'Cash', type: 'CASH', balance: cashBalance || 0 });
+    }
+    if (bankBalance > 0) {
+      walletsToCreate.push({ name: 'Bank Account', type: 'BANK_ACCOUNT', balance: bankBalance });
+    }
+    if (cardBalance > 0) {
+      walletsToCreate.push({ name: 'Credit Card', type: 'CREDIT_CARD', balance: cardBalance });
+    }
+
+    const totalInitialBalance = (cashBalance || 0) + (bankBalance || 0) + (cardBalance || 0);
 
     await this.prisma.user.update({
       where: { id: userId },
       data: {
         monthlyBudget,
-        currentBalance: initialBalance || 0,
+        currentBalance: totalInitialBalance,
         wallets: {
-          create: {
-            name: initialWalletName || 'Cash',
-            type: initialWalletType || 'CASH',
-            balance: initialBalance || 0
-          }
+          create: walletsToCreate
         }
       }
     });
@@ -435,7 +444,12 @@ export class FinovaController {
       <html>
       <head>
         <title>Finova Financial Report</title>
+        <meta charset="utf-8">
         <style>
+          @media print {
+            body { padding: 0 !important; background: white !important; }
+            .no-print { display: none !important; }
+          }
           body { font-family: sans-serif; padding: 40px; color: #1A1D2E; background: #F8F9FC; }
           h1 { font-family: sans-serif; color: #6C5CE7; margin-bottom: 5px; }
           .summary { display: flex; gap: 20px; margin: 30px 0; }
@@ -505,6 +519,19 @@ export class FinovaController {
             `).join('')}
           </tbody>
         </table>
+        
+        <div class="no-print" style="margin-top: 30px; text-align: center;">
+          <button onclick="window.print()" style="background: #6C5CE7; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px;">
+            Print / Save as PDF
+          </button>
+        </div>
+        
+        <script>
+          // Automatically open print dialog when loaded
+          window.onload = function() {
+            setTimeout(() => window.print(), 500);
+          }
+        </script>
       </body>
       </html>
     `;

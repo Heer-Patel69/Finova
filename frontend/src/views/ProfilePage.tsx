@@ -12,7 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 type ProfileSection = 'main' | 'appearance' | 'language' | 'currency' | 'leaderboard';
 
 export default function ProfilePage() {
-  const { language, setLanguage, currency, setCurrency, monthlyBudget, setMonthlyBudget, xp, streak } = useApp();
+  const { language, setLanguage, currency, setCurrency, monthlyBudget, setMonthlyBudget, xp, streak, logout } = useApp();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [section, setSection] = useState<ProfileSection>('main');
 
@@ -316,8 +316,12 @@ export default function ProfilePage() {
       </div>
 
       {/* Logout */}
-      <button className="w-full py-3.5 rounded-xl text-sm font-heading font-bold"
-        style={{ background: '#FF6B6B15', color: '#FF6B6B' }}>
+      <button
+        onClick={logout}
+        className="w-full py-3.5 rounded-xl text-sm font-heading font-bold flex items-center justify-center gap-2"
+        style={{ background: '#FF6B6B15', color: '#FF6B6B' }}
+      >
+        <LogOut className="w-4 h-4" />
         Log Out
       </button>
 

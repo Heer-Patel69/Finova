@@ -56,17 +56,19 @@ export default function HomePage() {
     (tx) => tx.type === 'EXPENSE' && new Date(tx.date).getMonth() === now.getMonth()
   );
   const totalSpent = monthlyExpenses.reduce((s, tx) => s + tx.convertedAmount, 0);
-  const remainingBudget = Math.max(0, monthlyBudget - totalSpent);
+  const totalIncome = transactions
+    .filter((tx) => tx.type === 'INCOME' && new Date(tx.date).getMonth() === now.getMonth())
+    .reduce((s, tx) => s + tx.convertedAmount, 0);
+
+  const remainingBudget = Math.max(0, Math.max(monthlyBudget, totalIncome) - totalSpent);
   const dailySafeSpend = remainingBudget / daysRemaining;
-  const budgetPercent = Math.min(100, Math.round((totalSpent / monthlyBudget) * 100));
+  const budgetPercent = Math.min(100, Math.round((totalSpent / Math.max(monthlyBudget, totalIncome || 1)) * 100));
 
   const todaySpent = transactions
     .filter((tx) => tx.type === 'EXPENSE' && new Date(tx.date).toDateString() === todayStr)
     .reduce((s, tx) => s + tx.convertedAmount, 0);
 
-  const totalIncome = transactions
-    .filter((tx) => tx.type === 'INCOME' && new Date(tx.date).getMonth() === now.getMonth())
-    .reduce((s, tx) => s + tx.convertedAmount, 0);
+
 
   const activeDailySafeSpend = brief ? brief.dailySafeSpending : dailySafeSpend;
 

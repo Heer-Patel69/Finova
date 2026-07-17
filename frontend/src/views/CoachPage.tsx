@@ -13,7 +13,7 @@ const quickQuestions = [
 ];
 
 export default function CoachPage() {
-  const { transactions, monthlyBudget, formatCurrency, streak } = useApp();
+  const { transactions, monthlyBudget, formatCurrency, streak, user, token } = useApp();
 
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
@@ -26,11 +26,13 @@ export default function CoachPage() {
   const totalSpent = transactions
     .filter((t) => t.type === 'EXPENSE' && new Date(t.date).getMonth() === now.getMonth())
     .reduce((s, t) => s + t.convertedAmount, 0);
-  const remainingBudget = Math.max(0, monthlyBudget - totalSpent);
-  const dailySafeSpend = remainingBudget / daysRemaining;
   const totalIncome = transactions
     .filter((t) => t.type === 'INCOME' && new Date(t.date).getMonth() === now.getMonth())
     .reduce((s, t) => s + t.convertedAmount, 0);
+
+  const remainingBudget = Math.max(0, Math.max(monthlyBudget, totalIncome) - totalSpent);
+  const dailySafeSpend = remainingBudget / daysRemaining;
+
   const healthScore = Math.round(
     ((totalIncome > 0 ? ((totalIncome - totalSpent) / totalIncome) * 100 : 50) * 0.4) +
     ((totalSpent / monthlyBudget < 0.8 ? 100 : totalSpent / monthlyBudget < 1 ? 60 : 20) * 0.35) +
@@ -46,8 +48,11 @@ export default function CoachPage() {
     try {
       const response = await fetch(`${API_URL}/api/ai-coach/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: 'user-uuid-1', message: userMsg }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId: user?.id, message: userMsg }),
       });
       const data = await response.json();
       setChatMessages((prev) => [...prev, { sender: 'ai', text: data.answer || data.message || 'I had trouble processing that.' }]);
