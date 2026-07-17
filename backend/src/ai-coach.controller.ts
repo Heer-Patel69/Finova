@@ -52,7 +52,7 @@ export class AiCoachController {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'llama3-70b-8192',
+          model: 'llama-3.3-70b-versatile',
           response_format: { type: 'json_object' },
           messages: [
             {
@@ -67,9 +67,15 @@ export class AiCoachController {
         })
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Groq API Error: ${response.status} ${errText}`);
+      }
+
       const data = await response.json();
       return JSON.parse(data.choices[0].message.content);
     } catch (err) {
+      console.error('Morning Briefing AI Error:', err);
       // Return safe fallback on connection error
       return {
         greeting: `Good Morning, ${user.name}!`,
@@ -132,7 +138,7 @@ export class AiCoachController {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'llama3-70b-8192',
+          model: 'llama-3.3-70b-versatile',
           response_format: { type: 'json_object' },
           messages: [
             {
@@ -147,9 +153,15 @@ export class AiCoachController {
         })
       });
 
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Groq API Error: ${response.status} ${errText}`);
+      }
+
       const data = await response.json();
       return JSON.parse(data.choices[0].message.content);
     } catch (err) {
+      console.error('Chat Query AI Error:', err);
       return {
         answer: `Evaluating offline: Your current daily safe spend limit is $${dailySafeSpending.toFixed(2)}.`,
         isAffordable,
