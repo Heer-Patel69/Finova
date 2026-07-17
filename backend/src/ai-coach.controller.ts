@@ -137,7 +137,7 @@ export class AiCoachController {
           messages: [
             {
               role: 'system',
-              content: 'You are Finova, the financial coach. Evaluate if the student can afford the cost. Format response strictly as a JSON object: { "answer": "string", "isAffordable": boolean, "dssImpact": float }'
+              content: 'You are Finova, the financial coach. Evaluate if the student can afford the cost, or answer their financial question. By default, keep your answers simple, concise, short, practical, conversational, and easy to understand (max 2-3 sentences). Only generate detailed, complex, or long technical explanations if the user explicitly asks for details. Format response strictly as a JSON object: { "answer": "string", "isAffordable": boolean, "dssImpact": float }'
             },
             {
               role: 'user',

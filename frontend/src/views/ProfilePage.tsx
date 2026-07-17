@@ -13,7 +13,7 @@ import { API_URL } from '../config';
 type ProfileSection = 'main' | 'appearance' | 'language' | 'currency' | 'leaderboard';
 
 export default function ProfilePage() {
-  const { language, setLanguage, currency, setCurrency, monthlyBudget, setMonthlyBudget, xp, streak, logout } = useApp();
+  const { language, setLanguage, currency, setCurrency, monthlyBudget, setMonthlyBudget, xp, streak, logout, user } = useApp();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [section, setSection] = useState<ProfileSection>('main');
 
@@ -152,10 +152,12 @@ export default function ProfilePage() {
       <div className="card-gradient p-5 rounded-2xl text-center animate-fade-in-up">
         <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-heading font-bold"
           style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
-          H
+          {user?.name?.[0] || 'U'}
         </div>
-        <h2 className="font-heading font-bold text-lg text-white">Heer Patel</h2>
-        <p className="text-white/60 text-xs">Caucasus University · Georgia</p>
+        <h2 className="font-heading font-bold text-lg text-white">{user?.name || 'User'}</h2>
+        <p className="text-white/60 text-xs">
+          {user?.college || 'No University'} · {user?.country || 'No Country'}
+        </p>
         <div className="mt-3 flex justify-center gap-4">
           <div>
             <p className="text-white font-heading font-bold">{xp}</p>
