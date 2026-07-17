@@ -19,32 +19,38 @@ export class FinovaController {
       throw new BadRequestException('Email, password, and name are required');
     }
 
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
-      throw new BadRequestException('User already exists');
-    }
+    try {
+      const existingUser = await this.prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        throw new BadRequestException('User already exists');
+      }
 
-    const passwordHash = await bcrypt.hash(password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        name,
-        country,
-        college,
-        baseCurrency: baseCurrency || 'USD',
-        profile: {
-          create: {
-            xp: 0,
-            currentStreak: 0,
-            highestStreak: 0
+      const passwordHash = await bcrypt.hash(password, 10);
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+          name,
+          country: country || '',
+          college: college || '',
+          baseCurrency: baseCurrency || 'USD',
+          profile: {
+            create: {
+              xp: 0,
+              currentStreak: 0,
+              highestStreak: 0
+            }
           }
         }
-      }
-    });
+      });
 
-    const token = this.jwtService.sign({ userId: user.id, email: user.email });
-    return { message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name } };
+      const token = this.jwtService.sign({ userId: user.id, email: user.email });
+      return { message: 'User registered successfully', token, user: { id: user.id, email: user.email, name: user.name } };
+    } catch (error: any) {
+      console.error('Register error:', error);
+      if (error.status) throw error; // Re-throw NestJS exceptions
+      throw new BadRequestException(error.message || 'Registration failed');
+    }
   }
 
   @Post('auth/login')
