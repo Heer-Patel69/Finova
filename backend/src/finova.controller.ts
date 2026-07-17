@@ -75,7 +75,7 @@ export class FinovaController {
     const { userId, monthlyBudget, cashBalance, bankBalance, cardBalance } = body;
     if (!userId) throw new BadRequestException('User ID is required');
 
-    const walletsToCreate = [];
+    const walletsToCreate: { name: string, type: 'CASH' | 'BANK_ACCOUNT' | 'CREDIT_CARD', balance: number }[] = [];
     if (cashBalance > 0 || (bankBalance === 0 && cardBalance === 0)) {
       walletsToCreate.push({ name: 'Cash', type: 'CASH', balance: cashBalance || 0 });
     }
