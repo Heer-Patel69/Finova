@@ -1,6 +1,15 @@
 import { Controller, Get, Post, Delete, Body, Query, BadRequestException } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
+function cleanJsonResponse(text: string): string {
+  let clean = text.trim();
+  if (clean.startsWith('```')) {
+    clean = clean.replace(/^```(?:json)?\s*/i, '');
+    clean = clean.replace(/\s*```$/, '');
+  }
+  return clean.trim();
+}
+
 @Controller('api/ai-coach')
 export class AiCoachController {
   constructor(private readonly prisma: PrismaService) {}
@@ -73,7 +82,11 @@ export class AiCoachController {
       }
 
       const data = await response.json();
-      return JSON.parse(data.choices[0].message.content);
+      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
+      }
+      const contentText = data.choices[0].message.content;
+      return JSON.parse(cleanJsonResponse(contentText));
     } catch (err) {
       console.error('Morning Briefing AI Error:', err);
       // Return safe fallback on connection error
@@ -211,8 +224,11 @@ export class AiCoachController {
       }
 
       const data = await response.json();
+      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
+      }
       const contentText = data.choices[0].message.content;
-      const parsedAns = JSON.parse(contentText);
+      const parsedAns = JSON.parse(cleanJsonResponse(contentText));
 
       // Save conversation in DB
       await this.prisma.aIConversation.create({
