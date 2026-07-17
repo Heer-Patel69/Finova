@@ -10,45 +10,46 @@ function cleanJsonResponse(text: string): string {
   return clean.trim();
 }
 
-async function fetchFromGroq(apiKey: string, messages: any[]): Promise<any> {
+async function fetchFromGroq(apiKeys: string[], messages: any[]): Promise<any> {
   const models = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
   let lastError: any = null;
-  for (const model of models) {
-    try {
-      console.log(`[Groq] Attempting request using model: ${model}`);
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          response_format: { type: 'json_object' },
-          messages
-        })
-      });
+  for (const apiKey of apiKeys) {
+    for (const model of models) {
+      try {
+        console.log(`[Groq] Attempting request using key prefix ${apiKey.substring(0, 8)}... model: ${model}`);
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model,
+            response_format: { type: 'json_object' },
+            messages
+          })
+        });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Groq API Error: ${response.status} ${errText}`);
-      }
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Groq API Error: ${response.status} ${errText}`);
+        }
 
-      const data = await response.json();
-      if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
-        throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
+        const data = await response.json();
+        if (!data.choices || data.choices.length === 0 || !data.choices[0].message) {
+          throw new Error(`Invalid response structure from Groq: ${JSON.stringify(data)}`);
+        }
+        return data;
+      } catch (err) {
+        console.warn(`[Groq] Failed with key prefix ${apiKey.substring(0, 8)}... model ${model}:`, err.message || err);
+        lastError = err;
+        if (err.message && (err.message.includes('429') || err.message.includes('rate_limit'))) {
+          continue;
+        }
       }
-      return data;
-    } catch (err) {
-      console.warn(`[Groq] Failed with model ${model}:`, err.message || err);
-      lastError = err;
-      if (err.message && (err.message.includes('429') || err.message.includes('rate_limit'))) {
-        continue;
-      }
-      // If it's another error, also retry with fallback model
     }
   }
-  throw lastError || new Error('Failed to query Groq');
+  throw lastError || new Error('Failed to query Groq with all available keys');
 }
 
 @Controller('api/ai-coach')
@@ -81,8 +82,15 @@ export class AiCoachController {
     const daysRemaining = 30 - new Date().getDate() + 1;
     const dailySafeSpending = remainingBudgetUSD / daysRemaining;
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
+    const apiKeys: string[] = [];
+    if (process.env.GROQ_API_KEY) {
+      apiKeys.push(...process.env.GROQ_API_KEY.split(',').map(k => k.trim()).filter(Boolean));
+    }
+    if (process.env.GROQ_API_KEY_ALT) {
+      apiKeys.push(...process.env.GROQ_API_KEY_ALT.split(',').map(k => k.trim()).filter(Boolean));
+    }
+
+    if (apiKeys.length === 0) {
       // Mock Fallback if no API key is defined in environment
       return {
         greeting: `Good Morning, ${user.name}!`,
@@ -105,7 +113,7 @@ export class AiCoachController {
           content: `User name: ${user.name}, remaining days: ${daysRemaining}, remaining budget: $${remainingBudgetUSD}, DSS limit: $${dailySafeSpending}`
         }
       ];
-      const data = await fetchFromGroq(apiKey, messages);
+      const data = await fetchFromGroq(apiKeys, messages);
       const contentText = data.choices[0].message.content;
       return JSON.parse(cleanJsonResponse(contentText));
     } catch (err) {
@@ -172,8 +180,15 @@ export class AiCoachController {
     const cost = costMatch ? parseFloat(costMatch[0]) : 0;
     const isAffordable = cost <= dailySafeSpending * 1.5;
 
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
+    const apiKeys: string[] = [];
+    if (process.env.GROQ_API_KEY) {
+      apiKeys.push(...process.env.GROQ_API_KEY.split(',').map(k => k.trim()).filter(Boolean));
+    }
+    if (process.env.GROQ_API_KEY_ALT) {
+      apiKeys.push(...process.env.GROQ_API_KEY_ALT.split(',').map(k => k.trim()).filter(Boolean));
+    }
+
+    if (apiKeys.length === 0) {
       const fallbackAns = isAffordable
         ? `Yes, this fits within your daily safe allowance of $${dailySafeSpending.toFixed(2)}. Go ahead and log it afterwards!`
         : `That purchase of $${cost.toFixed(2)} exceeds your daily safe limit of $${dailySafeSpending.toFixed(2)}. I recommend waiting or splitting it.`;
@@ -226,7 +241,7 @@ export class AiCoachController {
         content: `User query: "${message}", remaining budget: $${remainingBudgetUSD}, daily allowance: $${dailySafeSpending}, proposed item cost: $${cost}`
       });
 
-      const data = await fetchFromGroq(apiKey, messages);
+      const data = await fetchFromGroq(apiKeys, messages);
       const contentText = data.choices[0].message.content;
       const parsedAns = JSON.parse(cleanJsonResponse(contentText));
 
